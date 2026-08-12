@@ -6,6 +6,8 @@ La experiencia principal replica la simpleza de **Discover** en Microsoft Foundr
 
 La pestaña **Models** permite estimar a nivel modelo/familia con input tokens y output tokens mensuales usando medidores oficiales de Foundry Models.
 
+La UI está pensada para conversación con cliente: cada tarjeta pregunta por una cantidad mensual entendible (imágenes, páginas, documentos, caracteres, horas, iteraciones o tokens según aplique), muestra si el servicio consume tokens o no, calcula precio aproximado y deja links de documentación junto al resultado. Las unidades abreviadas de billing se muestran como valores completos.
+
 ## Fuentes oficiales
 
 - Azure Retail Prices API: https://learn.microsoft.com/en-us/rest/api/cost-management/retail-prices/azure-retail-prices

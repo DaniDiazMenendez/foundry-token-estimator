@@ -285,14 +285,38 @@
     }
 
     .line {
-      display: flex;
-      justify-content: space-between;
+      display: grid;
+      grid-template-columns: 1fr auto;
       gap: 12px;
       padding: 8px 0;
       border-bottom: 1px solid var(--cp-border);
     }
 
     .line:last-child { border-bottom: 0; }
+
+    .line small {
+      grid-column: 1 / -1;
+      color: var(--cp-text-muted);
+    }
+
+    .answer {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .answer-card {
+      border: 1px solid var(--cp-border);
+      border-radius: 10px;
+      padding: 12px;
+      background: var(--cp-surface-soft);
+    }
+
+    .answer-card strong {
+      display: block;
+      font-size: 18px;
+      margin-top: 4px;
+    }
 
     .chips {
       display: flex;
@@ -384,15 +408,19 @@
           <p class="muted small" id="serviceDescription">Las tarjetas replican escenarios del Discover de Foundry: documentos, voz, traducción, lenguaje, call center y avatares.</p>
           <div class="form-grid" style="margin-top: 14px;">
             <label>
-              Medidor oficial
+              Región de Azure
+              <select id="serviceRegion"></select>
+            </label>
+            <label>
+              Tipo de precio oficial
               <select id="serviceMeter"></select>
             </label>
             <label>
-              Volumen mensual
+              <span id="serviceQuestion">Cantidad mensual</span>
               <input id="serviceQuantity" type="number" min="0" step="1" value="10000">
             </label>
             <label>
-              Unidad estimada
+              Unidad que vas a ingresar
               <input id="serviceUnit" readonly>
             </label>
           </div>
@@ -412,6 +440,10 @@
               Modelo o familia
               <select id="modelFamily"></select>
             </label>
+            <label>
+              Región
+              <select id="modelRegion"></select>
+            </label>
             <div class="two">
               <label>
                 Input tokens/mes
@@ -422,10 +454,6 @@
                 <input id="outputTokens" type="number" min="0" step="1" value="250000">
               </label>
             </div>
-            <label>
-              Región
-              <select id="modelRegion"></select>
-            </label>
           </div>
           <div class="total" style="margin-top: 14px;">
             <span class="muted small">Costo mensual estimado</span>
@@ -476,7 +504,9 @@
             title: "Document layout analyzer",
             description: "Parse documents into text, tables, layout and spans.",
             quantityLabel: "Páginas de documentos por mes",
+            customerQuestion: "¿Cuántas páginas de documentos querés analizar por mes?",
             defaultQuantity: 10000,
+            simpleUnit: "páginas/mes",
             include: ["document intelligence"],
             prefer: ["layout", "read", "pre-built", "standard"],
             docs: [["Document Intelligence docs", DOCS.documentIntelligence], ["Pricing", DOCS.documentIntelligencePricing]]
@@ -487,7 +517,9 @@
             title: "Speech to text",
             description: "Transcribe spoken audio in real time or from files.",
             quantityLabel: "Horas o transacciones de audio por mes",
+            customerQuestion: "¿Cuántas horas de audio querés transcribir por mes?",
             defaultQuantity: 100,
+            simpleUnit: "horas de audio/mes",
             include: ["speech"],
             prefer: ["speech to text", "audio input", "standard"],
             docs: [["Speech pricing", DOCS.speechPricing]]
@@ -498,7 +530,9 @@
             title: "Invoice analyzer",
             description: "Extract line items, totals and vendor details.",
             quantityLabel: "Páginas de facturas por mes",
+            customerQuestion: "¿Cuántas páginas de facturas querés procesar por mes?",
             defaultQuantity: 5000,
+            simpleUnit: "páginas de facturas/mes",
             include: ["document intelligence"],
             prefer: ["pre-built", "invoice", "standard"],
             docs: [["Document Intelligence docs", DOCS.documentIntelligence], ["Pricing", DOCS.documentIntelligencePricing]]
@@ -509,7 +543,9 @@
             title: "Text to speech",
             description: "Synthesize speech using voices from multiple providers.",
             quantityLabel: "Caracteres por mes",
+            customerQuestion: "¿Cuántos caracteres querés convertir a voz por mes?",
             defaultQuantity: 1000000,
+            simpleUnit: "caracteres/mes",
             include: ["speech"],
             prefer: ["text to speech characters", "neural", "characters"],
             docs: [["Speech pricing", DOCS.speechPricing]]
@@ -520,7 +556,9 @@
             title: "Voice live",
             description: "Build voice-enabled agents with speech and models.",
             quantityLabel: "Tokens o unidades de audio por mes",
+            customerQuestion: "¿Cuántos tokens o unidades de voz esperás consumir por mes?",
             defaultQuantity: 1000000,
+            simpleUnit: "tokens o unidades/mes",
             include: ["speech"],
             prefer: ["voice live", "tokens", "audio input"],
             docs: [["Speech pricing", DOCS.speechPricing]]
@@ -531,7 +569,9 @@
             title: "Text translation",
             description: "Translate text across languages.",
             quantityLabel: "Caracteres traducidos por mes",
+            customerQuestion: "¿Cuántos caracteres querés traducir por mes?",
             defaultQuantity: 1000000,
+            simpleUnit: "caracteres/mes",
             include: ["translator"],
             prefer: ["standard characters", "document characters", "characters"],
             docs: [["Translator pricing", DOCS.translatorPricing]]
@@ -542,7 +582,9 @@
             title: "Language detection",
             description: "Identify input language for text.",
             quantityLabel: "Registros de texto por mes",
+            customerQuestion: "¿Cuántos textos o registros querés detectar por mes?",
             defaultQuantity: 100000,
+            simpleUnit: "registros de texto/mes",
             include: ["azure language", "language understanding"],
             prefer: ["text records", "standard", "s1"],
             docs: [["Language pricing", DOCS.languagePricing]]
@@ -553,7 +595,9 @@
             title: "Call center analyzer",
             description: "Extract sentiment, topics and conversation summaries.",
             quantityLabel: "Registros, horas o tokens por mes",
+            customerQuestion: "¿Cuántas conversaciones, horas o registros querés analizar por mes?",
             defaultQuantity: 100000,
+            simpleUnit: "conversaciones/registros/mes",
             include: ["language", "speech", "content safety"],
             prefer: ["text records", "speech to text", "standard"],
             docs: [["Language pricing", DOCS.languagePricing], ["Speech pricing", DOCS.speechPricing]]
@@ -564,7 +608,9 @@
             title: "Speech translation",
             description: "Translate spoken audio across languages in real time.",
             quantityLabel: "Horas de audio o caracteres traducidos por mes",
+            customerQuestion: "¿Cuántas horas de audio traducido querés procesar por mes?",
             defaultQuantity: 100,
+            simpleUnit: "horas de audio/mes",
             include: ["speech", "translator"],
             prefer: ["speech translation", "speech to text", "standard characters", "characters"],
             docs: [["Speech translation docs", DOCS.speechTranslation], ["Speech pricing", DOCS.speechPricing], ["Translator pricing", DOCS.translatorPricing]]
@@ -575,7 +621,9 @@
             title: "Tax (US) analyzer",
             description: "Extract structured information from common US tax forms.",
             quantityLabel: "Páginas de formularios fiscales por mes",
+            customerQuestion: "¿Cuántas páginas de formularios fiscales querés analizar por mes?",
             defaultQuantity: 5000,
+            simpleUnit: "páginas/mes",
             include: ["document intelligence"],
             prefer: ["tax", "pre-built", "standard", "read"],
             docs: [["Document Intelligence docs", DOCS.documentIntelligence], ["Pricing", DOCS.documentIntelligencePricing]]
@@ -586,7 +634,9 @@
             title: "Text to speech avatar",
             description: "Bring your brand to life using avatars with natural-sounding voices.",
             quantityLabel: "Caracteres, minutos o unidades de avatar por mes",
+            customerQuestion: "¿Cuántos caracteres, minutos o unidades de avatar querés generar por mes?",
             defaultQuantity: 100000,
+            simpleUnit: "caracteres/minutos/mes",
             include: ["speech"],
             prefer: ["avatar", "text to speech", "characters"],
             docs: [["Text to speech avatar docs", DOCS.textToSpeechAvatar], ["Speech pricing", DOCS.speechPricing]]
@@ -597,7 +647,9 @@
             title: "Document translation",
             description: "Translate documents at scale while preserving layout.",
             quantityLabel: "Caracteres, documentos o imágenes traducidas por mes",
+            customerQuestion: "¿Cuántos caracteres de documentos querés traducir por mes?",
             defaultQuantity: 1000000,
+            simpleUnit: "caracteres de documentos/mes",
             include: ["translator"],
             prefer: ["document characters", "document", "standard characters", "characters"],
             docs: [["Document translation docs", DOCS.documentTranslation], ["Translator pricing", DOCS.translatorPricing]]
@@ -608,7 +660,9 @@
             title: "Text PII redaction",
             description: "Detect and redact personally identifiable information in text.",
             quantityLabel: "Registros de texto por mes",
+            customerQuestion: "¿Cuántos textos querés redactar por mes?",
             defaultQuantity: 100000,
+            simpleUnit: "textos/mes",
             include: ["azure language"],
             prefer: ["pii", "text records", "standard"],
             docs: [["PII docs", DOCS.pii], ["Language pricing", DOCS.languagePricing]]
@@ -619,7 +673,9 @@
             title: "Document PII redaction",
             description: "Identify and redact sensitive personal information across documents.",
             quantityLabel: "Páginas o documentos por mes",
+            customerQuestion: "¿Cuántas páginas o documentos querés redactar por mes?",
             defaultQuantity: 10000,
+            simpleUnit: "páginas/documentos/mes",
             include: ["azure language"],
             prefer: ["doc-pii", "document", "pages", "pii"],
             docs: [["PII docs", DOCS.pii], ["Language pricing", DOCS.languagePricing]]
@@ -630,7 +686,9 @@
             title: "Conversational PII redaction",
             description: "Detect and remove personal information from transcripts and chats.",
             quantityLabel: "Conversaciones, turnos o registros por mes",
+            customerQuestion: "¿Cuántas conversaciones o turnos querés redactar por mes?",
             defaultQuantity: 100000,
+            simpleUnit: "conversaciones/turnos/mes",
             include: ["azure language"],
             prefer: ["conversation", "pii", "text records", "standard"],
             docs: [["PII docs", DOCS.pii], ["Language pricing", DOCS.languagePricing]]
@@ -641,7 +699,9 @@
             title: "OCR Read analyzer",
             description: "Extract printed and handwritten text from images and documents.",
             quantityLabel: "Páginas o imágenes OCR por mes",
+            customerQuestion: "¿Cuántas imágenes o páginas querés procesar con OCR por mes?",
             defaultQuantity: 10000,
+            simpleUnit: "imágenes o páginas/mes",
             include: ["document intelligence", "vision"],
             prefer: ["read", "ocr", "standard", "transactions"],
             docs: [["Document Intelligence docs", DOCS.documentIntelligence], ["Vision docs", DOCS.vision], ["Document Intelligence pricing", DOCS.documentIntelligencePricing]]
@@ -652,7 +712,9 @@
             title: "Text analytics for health",
             description: "Extract medical concepts, relationships and codes from text.",
             quantityLabel: "Registros clínicos o texto por mes",
+            customerQuestion: "¿Cuántos registros clínicos o textos querés analizar por mes?",
             defaultQuantity: 100000,
+            simpleUnit: "registros clínicos/mes",
             include: ["azure language"],
             prefer: ["ta4h", "health", "text analytics", "text records"],
             docs: [["Text analytics for health docs", DOCS.health], ["Language pricing", DOCS.languagePricing]]
@@ -663,7 +725,9 @@
             title: "Document fields analyzer",
             description: "Extract structured field values from any document type.",
             quantityLabel: "Páginas de documentos por mes",
+            customerQuestion: "¿Cuántas páginas de documentos querés extraer por mes?",
             defaultQuantity: 10000,
+            simpleUnit: "páginas/mes",
             include: ["document intelligence"],
             prefer: ["custom", "pre-built", "layout", "standard"],
             docs: [["Document Intelligence docs", DOCS.documentIntelligence], ["Pricing", DOCS.documentIntelligencePricing]]
@@ -823,7 +887,9 @@
       modelPanel: document.getElementById("modelPanel"),
       serviceTitle: document.getElementById("serviceTitle"),
       serviceDescription: document.getElementById("serviceDescription"),
+      serviceRegion: document.getElementById("serviceRegion"),
       serviceMeter: document.getElementById("serviceMeter"),
+      serviceQuestion: document.getElementById("serviceQuestion"),
       serviceQuantity: document.getElementById("serviceQuantity"),
       serviceUnit: document.getElementById("serviceUnit"),
       serviceTotal: document.getElementById("serviceTotal"),
@@ -877,6 +943,45 @@
       return 1;
     }
 
+    function expandedUnit(unit) {
+      const normalized = String(unit || "").toLowerCase();
+      if (normalized.includes("1m")) return "1.000.000";
+      if (normalized.includes("1k")) return "1.000";
+      if (normalized.includes("1/hour") || normalized.includes("1 hour")) return "1 hora";
+      if (normalized.includes("1/day")) return "1 día";
+      if (normalized.includes("1/month")) return "1 mes";
+      if (normalized.includes("1/year")) return "1 año";
+      return unit || "1 unidad";
+    }
+
+    function fullNumber(value) {
+      return new Intl.NumberFormat("es-AR").format(value);
+    }
+
+    function friendlyMeterText(value) {
+      return String(value || "")
+        .replace(/\b(\d+)K\b/g, (_, n) => fullNumber(Number(n) * 1000))
+        .replace(/\b(\d+)M\b/g, (_, n) => fullNumber(Number(n) * 1000000))
+        .replace(/\b1K\b/g, "1.000")
+        .replace(/\b1M\b/g, "1.000.000");
+    }
+
+    function isTokenMeter(item) {
+      return /token/i.test(`${item.unitOfMeasure} ${item.meterName} ${item.skuName}`);
+    }
+
+    function isCharacterMeter(item) {
+      return /character/i.test(`${item.meterName} ${item.skuName}`);
+    }
+
+    function isHourMeter(item) {
+      return /hour/i.test(`${item.unitOfMeasure} ${item.meterName} ${item.skuName}`);
+    }
+
+    function isTransactionMeter(item) {
+      return /transaction|record|page|image/i.test(`${item.unitOfMeasure} ${item.meterName} ${item.skuName}`);
+    }
+
     function cost(item, quantity) {
       return (Number(quantity) / unitDivisor(item.unitOfMeasure)) * Number(item.retailPrice || 0);
     }
@@ -886,7 +991,7 @@
       return all
         .filter(item => service.include.some(term => searchable(item).includes(term)))
         .sort((a, b) => rankService(b, service) - rankService(a, service) || a.productName.localeCompare(b.productName))
-        .slice(0, 180);
+        .slice(0, 400);
     }
 
     function rankService(item, service) {
@@ -896,7 +1001,10 @@
         if (text.includes(term)) score += 30 - index;
       });
       if (item.unitOfMeasure === "1K" || item.unitOfMeasure === "1M") score += 8;
-      if (text.includes("commitment")) score -= 15;
+      if (service.id === "ocr-read-analyzer" && text.includes("face")) score -= 60;
+      if (service.id === "ocr-read-analyzer" && text.includes("document intelligence")) score += 30;
+      if (service.id === "ocr-read-analyzer" && text.includes("read")) score += 25;
+      if (text.includes("commitment")) score -= 80;
       if (text.includes("disconnected")) score -= 20;
       return score;
     }
@@ -986,6 +1094,16 @@
       `;
     }
 
+    function uniqueBy(items, getKey) {
+      const seen = new Set();
+      return items.filter(item => {
+        const key = getKey(item);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+
     function selectService(id) {
       const service = SERVICE_SECTIONS.flatMap(section => section.items).find(item => item.id === id);
       if (!service) return;
@@ -994,14 +1112,29 @@
       els.serviceTitle.textContent = service.title;
       els.serviceDescription.textContent = service.description;
       els.serviceQuantity.value = service.defaultQuantity;
+      els.serviceQuestion.textContent = service.customerQuestion || service.quantityLabel;
+      els.serviceUnit.value = service.simpleUnit || service.quantityLabel;
       const pool = servicePool(service);
-      els.serviceMeter.innerHTML = pool.map(item => `<option value="${item.id}">${escapeHtml(labelFor(item))}</option>`).join("");
+      const regions = [...new Set(pool.map(item => item.armRegionName).filter(Boolean))].sort();
+      const preferredRegion = regions.includes("eastus") ? "eastus" : regions[0];
+      els.serviceRegion.innerHTML = regions.map(region => `<option>${escapeHtml(region)}</option>`).join("");
+      els.serviceRegion.value = preferredRegion || "";
+      populateServiceMeters();
       renderServices();
       calculateService();
     }
 
     function labelFor(item) {
-      return `${item.productName} / ${item.skuName} / ${item.armRegionName} / ${money.format(item.retailPrice)} per ${item.unitOfMeasure}`;
+      return `${friendlyMeterText(item.productName)} / ${friendlyMeterText(item.skuName)} / ${money.format(item.retailPrice)} cada ${expandedUnit(item.unitOfMeasure)}`;
+    }
+
+    function populateServiceMeters() {
+      if (!state.selectedService) return;
+      const region = els.serviceRegion.value;
+      const pool = servicePool(state.selectedService).filter(item => !region || item.armRegionName === region);
+      const compact = uniqueBy(pool, item => `${item.productName}|${item.skuName}|${item.meterName}|${item.unitOfMeasure}|${item.retailPrice}`)
+        .slice(0, 24);
+      els.serviceMeter.innerHTML = compact.map(item => `<option value="${item.id}">${escapeHtml(labelFor(item))}</option>`).join("");
     }
 
     function selectedServiceMeter() {
@@ -1013,12 +1146,30 @@
       if (!item) return;
       const quantity = Number(els.serviceQuantity.value || 0);
       const total = cost(item, quantity);
-      els.serviceUnit.value = item.unitOfMeasure;
+      const billingUnit = expandedUnit(item.unitOfMeasure);
+      const calculatedUnits = quantity / unitDivisor(item.unitOfMeasure);
+      const tokenText = isTokenMeter(item)
+        ? `<div class="answer-card"><span class="muted small">Tokens estimados</span><strong>${integer.format(quantity)} tokens/mes</strong><div class="chips"><a class="chip" href="${meterUrl(item.meterId)}" target="_blank" rel="noreferrer">Fuente precio</a></div></div>`
+        : `<div class="answer-card"><span class="muted small">Tokens estimados</span><strong>No aplica para este medidor</strong><small class="muted">Este servicio se cobra por ${billingUnit} ${isCharacterMeter(item) ? "caracteres" : isHourMeter(item) ? "hora" : isTransactionMeter(item) ? "transacciones/registros/páginas" : "unidades"}, no por tokens.</small></div>`;
       els.serviceTotal.textContent = money.format(total);
       els.serviceBreakdown.innerHTML = `
-        <div class="line"><span>Volumen</span><strong>${integer.format(quantity)}</strong></div>
-        <div class="line"><span>Precio retail</span><strong>${money.format(item.retailPrice)} / ${escapeHtml(item.unitOfMeasure)}</strong></div>
-        <div class="line"><span>Medidor</span><strong>${escapeHtml(item.meterName)}</strong></div>
+        <div class="answer">
+          <div class="answer-card">
+            <span class="muted small">Cantidad mensual ingresada</span>
+            <strong>${integer.format(quantity)} ${escapeHtml(state.selectedService?.simpleUnit || "unidades/mes")}</strong>
+            <div class="chips"><a class="chip" href="${state.selectedService?.docs?.[0]?.[1] || DOCS.foundry}" target="_blank" rel="noreferrer">Documentación servicio</a></div>
+          </div>
+          ${tokenText}
+          <div class="answer-card">
+            <span class="muted small">Precio aproximado</span>
+            <strong>${money.format(total)} / mes</strong>
+            <small>Fórmula: ${integer.format(quantity)} ÷ ${billingUnit} × ${money.format(item.retailPrice)}</small>
+            <div class="chips"><a class="chip" href="${meterUrl(item.meterId)}" target="_blank" rel="noreferrer">Ver medidor oficial</a><a class="chip" href="${DOCS.retail}" target="_blank" rel="noreferrer">Retail Prices API</a></div>
+          </div>
+        </div>
+        <div class="line"><span>Unidad oficial de cobro</span><strong>${billingUnit}</strong><small>Unidad completa usada para calcular el precio retail oficial.</small></div>
+        <div class="line"><span>Cantidad facturable</span><strong>${integer.format(calculatedUnits)}</strong><small>${integer.format(quantity)} unidades de cliente equivalen a ${integer.format(calculatedUnits)} bloques de cobro.</small></div>
+        <div class="line"><span>Medidor usado</span><strong>${escapeHtml(friendlyMeterText(item.meterName))}</strong></div>
       `;
       const docs = [["Retail meter", meterUrl(item.meterId)], ["Retail Prices API", DOCS.retail], ...(state.selectedService?.docs || [])];
       els.serviceLinks.innerHTML = docs.map(([label, href]) => `<a class="chip" href="${href}" target="_blank" rel="noreferrer">${escapeHtml(label)}</a>`).join("");
@@ -1135,10 +1286,24 @@
       const outputCost = outputMeter ? cost(outputMeter, outputTokens) : 0;
       els.modelTotal.textContent = money.format(inputCost + outputCost);
       els.modelBreakdown.innerHTML = `
-        <div class="line"><span>Input tokens</span><strong>${money.format(inputCost)}</strong></div>
-        <div class="line"><span>Output tokens</span><strong>${money.format(outputCost)}</strong></div>
-        <div class="line"><span>Input meter</span><strong>${escapeHtml(inputMeter?.meterName || "No encontrado")}</strong></div>
-        <div class="line"><span>Output meter</span><strong>${escapeHtml(outputMeter?.meterName || "No encontrado")}</strong></div>
+        <div class="answer">
+          <div class="answer-card">
+            <span class="muted small">Tokens estimados</span>
+            <strong>${integer.format(inputTokens + outputTokens)} tokens/mes</strong>
+            <small>${integer.format(inputTokens)} input + ${integer.format(outputTokens)} output.</small>
+            <div class="chips"><a class="chip" href="${DOCS.soldByAzure}" target="_blank" rel="noreferrer">Documentación modelos</a></div>
+          </div>
+          <div class="answer-card">
+            <span class="muted small">Precio aproximado</span>
+            <strong>${money.format(inputCost + outputCost)} / mes</strong>
+            <small>Input: ${money.format(inputCost)} · Output: ${money.format(outputCost)}</small>
+            <div class="chips"><a class="chip" href="${DOCS.openAiPricing}" target="_blank" rel="noreferrer">Pricing modelos</a><a class="chip" href="${DOCS.retail}" target="_blank" rel="noreferrer">Retail Prices API</a></div>
+          </div>
+        </div>
+        <div class="line"><span>Precio input</span><strong>${inputMeter ? `${money.format(inputMeter.retailPrice)} cada ${expandedUnit(inputMeter.unitOfMeasure)} tokens` : "No encontrado"}</strong></div>
+        <div class="line"><span>Precio output</span><strong>${outputMeter ? `${money.format(outputMeter.retailPrice)} cada ${expandedUnit(outputMeter.unitOfMeasure)} tokens` : "No encontrado"}</strong></div>
+        <div class="line"><span>Medidor input</span><strong>${escapeHtml(friendlyMeterText(inputMeter?.meterName || "No encontrado"))}</strong></div>
+        <div class="line"><span>Medidor output</span><strong>${escapeHtml(friendlyMeterText(outputMeter?.meterName || "No encontrado"))}</strong></div>
       `;
       const links = [
         ["Foundry Models", DOCS.soldByAzure],
@@ -1211,6 +1376,7 @@
     document.querySelectorAll(".nav button").forEach(button => button.addEventListener("click", () => setView(button.dataset.view)));
     els.search.addEventListener("input", () => document.querySelector(".nav button.active").dataset.view === "models" ? renderModelCatalog() : renderServices());
     els.serviceMeter.addEventListener("change", calculateService);
+    els.serviceRegion.addEventListener("change", () => { populateServiceMeters(); calculateService(); });
     els.serviceQuantity.addEventListener("input", calculateService);
     els.modelFamily.addEventListener("change", () => { updateModelRegions(); calculateModel(); });
     els.modelRegion.addEventListener("change", calculateModel);
