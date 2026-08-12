@@ -242,6 +242,35 @@
       margin-top: 14px;
     }
 
+    .quick-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .service-card {
+      background: var(--cp-bg-elevated);
+      border: 1px solid var(--cp-border);
+      border-radius: 16px;
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .service-card-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .service-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
     .step {
       background: var(--cp-bg-elevated);
       border: 1px solid var(--cp-border);
@@ -321,6 +350,13 @@
       color: var(--cp-danger);
     }
 
+    details.card > summary {
+      cursor: pointer;
+      font-size: 1.25rem;
+      font-weight: 700;
+      list-style-position: inside;
+    }
+
     .small {
       font-size: 0.86rem;
     }
@@ -328,7 +364,8 @@
     @media (max-width: 1100px) {
       .layout,
       .toolbar,
-      .row-grid {
+      .row-grid,
+      .service-row {
         grid-template-columns: 1fr;
       }
 
@@ -363,7 +400,7 @@
 
     <section class="toolbar card">
       <label>
-        Buscar servicio, modelo o medidor
+        Buscar modelo o medidor Foundry
         <input id="searchInput" placeholder="Ej: GPT 5 Mini input, Claude, Mistral, embedding">
       </label>
       <label>
@@ -377,18 +414,26 @@
       <button class="button" id="addStep">Agregar paso</button>
     </section>
 
+    <section class="card">
+      <h2>Estimaciones rápidas por servicio de IA</h2>
+      <p class="muted small">
+        Use esto para conversaciones con clientes: documentos por mes, imágenes por mes, caracteres traducidos, texto moderado o búsquedas. Cada tarjeta usa medidores oficiales de Azure Retail Prices y enlaza documentación del servicio.
+      </p>
+      <div class="quick-grid" id="quickServices"></div>
+    </section>
+
     <section class="layout">
       <div>
         <article class="card">
-          <h2>Proceso de estimación</h2>
+          <h2>Modelos Foundry por tokens</h2>
           <p class="muted small">
-            Use una línea por componente del proceso: entrada, salida, cached input, embeddings, imagen, audio o cualquier medidor oficial cargado. Las unidades se calculan según <code>unitOfMeasure</code> del medidor.
+            Para procesos con modelos, agregue una línea por componente: input, output, cached input, embeddings, imagen/audio tokenizado o batch. Las unidades se calculan según <code>unitOfMeasure</code> del medidor oficial.
           </p>
           <div class="process-list" id="steps"></div>
         </article>
 
-        <article class="card" style="margin-top: 20px;">
-          <h2>Medidores oficiales encontrados</h2>
+        <details class="card" style="margin-top: 20px;">
+          <summary>Medidores oficiales avanzados</summary>
           <p class="muted small" id="meterCount"></p>
           <div class="table-wrap">
             <table>
@@ -405,14 +450,14 @@
               <tbody id="meterTable"></tbody>
             </table>
           </div>
-        </article>
+        </details>
       </div>
 
       <aside class="card">
         <h2>Resumen</h2>
         <div class="summary-grid" style="margin-top: 12px;">
           <div class="metric">
-            <span class="muted small">Costo mensual</span>
+            <span class="muted small">Costo mensual total</span>
             <strong id="monthlyTotal">USD 0.00</strong>
           </div>
           <div class="metric">
@@ -424,7 +469,7 @@
             <strong id="unitTotal">0</strong>
           </div>
           <div class="metric">
-            <span class="muted small">Pasos</span>
+            <span class="muted small">Ítems estimados</span>
             <strong id="stepTotal">0</strong>
           </div>
         </div>
@@ -478,11 +523,95 @@
       azureOpenAiPricing: "https://azure.microsoft.com/en-us/pricing/details/azure-openai/",
       foundry: "https://learn.microsoft.com/en-us/azure/foundry/what-is-foundry",
       soldByAzure: "https://learn.microsoft.com/en-us/azure/foundry/foundry-models/concepts/models-sold-directly-by-azure",
-      partners: "https://learn.microsoft.com/en-us/azure/foundry/foundry-models/concepts/models-from-partners"
+      partners: "https://learn.microsoft.com/en-us/azure/foundry/foundry-models/concepts/models-from-partners",
+      documentIntelligence: "https://learn.microsoft.com/en-us/azure/ai-services/document-intelligence/overview?view=doc-intel-4.0.0",
+      documentIntelligencePricing: "https://azure.microsoft.com/en-us/pricing/details/document-intelligence/",
+      vision: "https://learn.microsoft.com/en-us/azure/ai-services/computer-vision/overview",
+      visionPricing: "https://azure.microsoft.com/en-us/pricing/details/computer-vision/",
+      contentSafety: "https://learn.microsoft.com/en-us/azure/ai-services/content-safety/overview",
+      contentSafetyPricing: "https://azure.microsoft.com/en-us/pricing/details/content-safety/",
+      speechPricing: "https://azure.microsoft.com/en-us/pricing/details/cognitive-services/speech-services/",
+      languagePricing: "https://azure.microsoft.com/en-us/pricing/details/cognitive-services/language-service/",
+      translatorPricing: "https://azure.microsoft.com/en-us/pricing/details/cognitive-services/translator/",
+      searchPricing: "https://azure.microsoft.com/en-us/pricing/details/search/"
     };
+
+    const SERVICE_PRESETS = [
+      {
+        id: "document-intelligence",
+        title: "Document Intelligence",
+        description: "Documentos, facturas, recibos o formularios. Normalmente se estima por páginas/transacciones según el medidor elegido.",
+        quantityLabel: "Páginas o transacciones/mes",
+        defaultQuantity: 10000,
+        include: ["document intelligence"],
+        prefer: ["standard", "pre-built", "layout", "read"],
+        docs: [["Docs servicio", DOCS.documentIntelligence], ["Pricing", DOCS.documentIntelligencePricing]]
+      },
+      {
+        id: "vision",
+        title: "Azure Vision",
+        description: "Imágenes por mes para análisis visual, OCR heredado o visión. El medidor define si cobra por 1K transacciones, día u otra unidad.",
+        quantityLabel: "Imágenes o transacciones/mes",
+        defaultQuantity: 50000,
+        include: ["azure vision", "azure custom vision"],
+        prefer: ["transactions", "standard", "s0"],
+        docs: [["Docs servicio", DOCS.vision], ["Pricing", DOCS.visionPricing]]
+      },
+      {
+        id: "content-safety",
+        title: "Content Safety",
+        description: "Moderación de texto, imágenes, prompt shields o groundedness. Útil para flujos GenAI con controles de seguridad.",
+        quantityLabel: "Registros o imágenes/mes",
+        defaultQuantity: 100000,
+        include: ["content safety"],
+        prefer: ["standard text records", "standard images", "transactions"],
+        docs: [["Docs servicio", DOCS.contentSafety], ["Pricing", DOCS.contentSafetyPricing]]
+      },
+      {
+        id: "translator",
+        title: "Translator",
+        description: "Traducción por caracteres. Use caracteres/mes, no documentos, salvo que convierta primero el volumen a caracteres.",
+        quantityLabel: "Caracteres/mes",
+        defaultQuantity: 1000000,
+        include: ["translator"],
+        prefer: ["characters", "standard"],
+        docs: [["Pricing", DOCS.translatorPricing]]
+      },
+      {
+        id: "speech",
+        title: "Speech",
+        description: "Texto a voz, voz a texto, audio o voice live. Elija el medidor que coincida con caracteres, horas, tokens o transacciones.",
+        quantityLabel: "Caracteres, horas o tokens/mes",
+        defaultQuantity: 1000000,
+        include: ["speech"],
+        prefer: ["text to speech characters", "speech to text", "audio input", "tokens"],
+        docs: [["Pricing", DOCS.speechPricing]]
+      },
+      {
+        id: "language",
+        title: "Language",
+        description: "Clasificación, PII, extracción, Q&A y text analytics. Normalmente se estima por 1K registros de texto o páginas.",
+        quantityLabel: "Registros, páginas o transacciones/mes",
+        defaultQuantity: 100000,
+        include: ["azure language", "language understanding"],
+        prefer: ["standard", "text records", "pages"],
+        docs: [["Pricing", DOCS.languagePricing]]
+      },
+      {
+        id: "ai-search",
+        title: "Azure AI Search",
+        description: "Búsqueda, agentic retrieval, skills o capacidad por hora. Para unidades por hora use horas/mes como cantidad.",
+        quantityLabel: "Tokens, transacciones u horas/mes",
+        defaultQuantity: 730,
+        include: ["azure ai search"],
+        prefer: ["agentic retrieval", "unit", "text records"],
+        docs: [["Pricing", DOCS.searchPricing]]
+      }
+    ];
 
     const state = {
       prices: [],
+      servicePrices: [],
       filtered: [],
       metadata: null
     };
@@ -493,6 +622,7 @@
       productFilter: document.getElementById("productFilter"),
       regionFilter: document.getElementById("regionFilter"),
       addStep: document.getElementById("addStep"),
+      quickServices: document.getElementById("quickServices"),
       steps: document.getElementById("steps"),
       meterCount: document.getElementById("meterCount"),
       meterTable: document.getElementById("meterTable"),
@@ -505,7 +635,7 @@
       template: document.getElementById("stepTemplate")
     };
 
-    const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 6 });
+    const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 4 });
     const integer = new Intl.NumberFormat("en-US");
 
     function meterDocUrl(meterId) {
@@ -559,6 +689,76 @@
       return `${item.productName} | ${item.skuName} | ${item.armRegionName} | ${money.format(item.retailPrice)} / ${item.unitOfMeasure}`;
     }
 
+    function serviceMatches(item, preset) {
+      const text = searchable(item);
+      return preset.include.some(value => text.includes(value));
+    }
+
+    function serviceRank(item, preset) {
+      const text = searchable(item);
+      let rank = 0;
+      preset.prefer.forEach((value, index) => {
+        if (text.includes(value)) rank += 20 - index;
+      });
+      if (item.unitOfMeasure === "1K" || item.unitOfMeasure === "1M") rank += 8;
+      if (String(item.skuName).toLowerCase().includes("commitment")) rank -= 12;
+      if (String(item.productName).toLowerCase().includes("disconnected")) rank -= 20;
+      return rank;
+    }
+
+    function serviceDocs(item, preset) {
+      return [
+        ["Retail meter", meterDocUrl(item.meterId)],
+        ["Retail Prices API", DOCS.retailApi],
+        ...preset.docs
+      ];
+    }
+
+    function renderQuickServices() {
+      els.quickServices.innerHTML = SERVICE_PRESETS.map(preset => {
+        const options = state.servicePrices
+          .filter(item => serviceMatches(item, preset))
+          .sort((a, b) => serviceRank(b, preset) - serviceRank(a, preset) || a.productName.localeCompare(b.productName))
+          .slice(0, 220);
+        return `
+          <article class="service-card" data-service="${preset.id}">
+            <div class="service-card-header">
+              <div>
+                <h3>${escapeHtml(preset.title)}</h3>
+                <p class="muted small">${escapeHtml(preset.description)}</p>
+              </div>
+              <strong class="service-cost">USD 0.00</strong>
+            </div>
+            <label>
+              <span><input class="service-include" type="checkbox"> Incluir este servicio en el total</span>
+            </label>
+            <label>
+              Medidor oficial
+              <select class="service-meter">
+                ${options.map(item => `<option value="${item.id}">${escapeHtml(optionLabel(item))}</option>`).join("")}
+              </select>
+            </label>
+            <div class="service-row">
+              <label>
+                ${escapeHtml(preset.quantityLabel)}
+                <input class="service-quantity" type="number" min="0" step="1" value="${preset.defaultQuantity}">
+              </label>
+              <label>
+                Multiplicador
+                <input class="service-factor" type="number" min="0" step="0.01" value="1">
+              </label>
+            </div>
+            <div class="links"></div>
+          </article>
+        `;
+      }).join("");
+
+      els.quickServices.querySelectorAll("input, select").forEach(input => {
+        input.addEventListener("input", recalcAll);
+        input.addEventListener("change", recalcAll);
+      });
+    }
+
     function populateFilters() {
       const products = [...new Set(state.prices.map(item => item.productName).filter(Boolean))].sort();
       const regions = [...new Set(state.prices.map(item => item.armRegionName).filter(Boolean))].sort();
@@ -604,7 +804,7 @@
 
     function renderMeters() {
       els.meterCount.textContent = `${integer.format(state.filtered.length)} medidores visibles de ${integer.format(state.prices.length)} cargados.`;
-      els.meterTable.innerHTML = state.filtered.slice(0, 80).map(item => `
+      els.meterTable.innerHTML = state.filtered.slice(0, 40).map(item => `
         <tr>
           <td>${escapeHtml(item.productName)}<br><span class="muted small">${escapeHtml(item.serviceName)}</span></td>
           <td><code>${escapeHtml(item.skuName)}</code><br><span class="small">${escapeHtml(item.meterName)}</span></td>
@@ -642,6 +842,27 @@
       updateStepOptions();
     }
 
+    function quickRowData(node) {
+      const preset = SERVICE_PRESETS.find(item => item.id === node.dataset.service);
+      const item = state.servicePrices.find(price => price.id === node.querySelector(".service-meter").value);
+      if (!preset || !item) return null;
+      const quantity = Number(node.querySelector(".service-quantity").value || 0);
+      const factor = Number(node.querySelector(".service-factor").value || 0);
+      const included = node.querySelector(".service-include").checked;
+      return {
+        node,
+        preset,
+        item,
+        name: preset.title,
+        quantity,
+        runs: 1,
+        factor,
+        included,
+        monthlyCost: calculateRunCost(item, quantity, factor),
+        runCost: calculateRunCost(item, quantity, factor)
+      };
+    }
+
     function rowData(node) {
       const item = state.prices.find(price => price.id === node.querySelector(".step-meter").value);
       if (!item) return null;
@@ -662,10 +883,22 @@
     }
 
     function recalcAll() {
+      const serviceRows = [...document.querySelectorAll(".service-card")].map(quickRowData).filter(Boolean);
       const rows = [...document.querySelectorAll(".step")].map(rowData).filter(Boolean);
       let monthly = 0;
       let run = 0;
       let units = 0;
+
+      serviceRows.forEach(row => {
+        if (row.included) {
+          monthly += row.monthlyCost;
+          units += row.quantity * row.factor;
+        }
+        row.node.querySelector(".service-cost").textContent = money.format(row.monthlyCost);
+        row.node.querySelector(".links").innerHTML = serviceDocs(row.item, row.preset)
+          .map(([text, href]) => `<a class="link-chip" href="${href}" target="_blank" rel="noreferrer">${text}</a>`)
+          .join("");
+      });
 
       rows.forEach(row => {
         monthly += row.monthlyCost;
@@ -680,11 +913,14 @@
       els.monthlyTotal.textContent = money.format(monthly);
       els.runTotal.textContent = money.format(run);
       els.unitTotal.textContent = integer.format(units);
-      els.stepTotal.textContent = integer.format(rows.length);
+      els.stepTotal.textContent = integer.format(rows.length + serviceRows.filter(row => row.included).length);
     }
 
     function currentRows() {
-      return [...document.querySelectorAll(".step")].map(rowData).filter(Boolean);
+      return [
+        ...[...document.querySelectorAll(".service-card")].map(quickRowData).filter(row => row && row.included),
+        ...[...document.querySelectorAll(".step")].map(rowData).filter(Boolean)
+      ];
     }
 
     function escapeHtml(value) {
@@ -704,6 +940,7 @@
     function buildCsv() {
       const header = [
         "paso",
+        "tipo",
         "serviceName",
         "productName",
         "skuName",
@@ -721,6 +958,7 @@
       ];
       const rows = currentRows().map(row => [
         row.name,
+        row.preset ? "servicio-ai" : "modelo-foundry",
         row.item.serviceName,
         row.item.productName,
         row.item.skuName,
@@ -734,7 +972,7 @@
         row.runCost,
         row.monthlyCost,
         meterDocUrl(row.item.meterId),
-        docsFor(row.item).map(([text, href]) => `${text}: ${href}`).join(" | ")
+        (row.preset ? serviceDocs(row.item, row.preset) : docsFor(row.item)).map(([text, href]) => `${text}: ${href}`).join(" | ")
       ]);
       return [header, ...rows].map(row => row.map(csvValue).join(",")).join("\n");
     }
@@ -754,7 +992,7 @@
           `Ejecuciones/mes: ${row.runs}`,
           `Costo mensual: ${money.format(row.monthlyCost)}`,
           `Fuente precio: ${meterDocUrl(row.item.meterId)}`,
-          `Docs: ${docsFor(row.item).map(([label, href]) => `${label} ${href}`).join(" | ")}`
+          `Docs: ${(row.preset ? serviceDocs(row.item, row.preset) : docsFor(row.item)).map(([label, href]) => `${label} ${href}`).join(" | ")}`
         ].join("\n"))
       ].join("\n\n");
       navigator.clipboard.writeText(text);
@@ -777,11 +1015,12 @@
         const data = await response.json();
         state.metadata = data.metadata;
         state.prices = data.items.map((item, index) => ({ ...item, id: `${item.meterId}-${index}` }));
+        state.servicePrices = (data.serviceItems || []).map((item, index) => ({ ...item, id: `${item.meterId}-service-${index}` }));
         state.filtered = state.prices.slice(0, 500);
         populateFilters();
         renderSources();
+        renderQuickServices();
         applyFilters();
-        addStep("Paso 1");
       } catch (error) {
         els.steps.innerHTML = `<div class="notice danger">Error cargando precios oficiales: ${escapeHtml(error.message)}. Ejecute <code>scripts/refresh-prices.ps1</code> para regenerar <code>data/prices.json</code>.</div>`;
       }

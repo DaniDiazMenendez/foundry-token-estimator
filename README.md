@@ -1,6 +1,8 @@
 # Calculadora de estimaciones de tokens para Microsoft Foundry
 
-Aplicación estática para estimar costos por proceso usando medidores oficiales de **Foundry Models** publicados en Azure Retail Prices API.
+Aplicación estática para estimar costos por proceso usando medidores oficiales de **Foundry Models** y servicios de IA publicados en Azure Retail Prices API.
+
+La experiencia principal incluye estimadores rápidos para Document Intelligence, Azure Vision, Content Safety, Translator, Speech, Language y Azure AI Search. La sección de modelos Foundry queda como modo avanzado para cálculos de entrada, salida, cached input, embeddings y otros medidores tokenizados.
 
 ## Fuentes oficiales
 
@@ -9,6 +11,9 @@ Aplicación estática para estimar costos por proceso usando medidores oficiales
 - Microsoft Foundry: https://learn.microsoft.com/en-us/azure/foundry/what-is-foundry
 - Foundry Models sold by Azure: https://learn.microsoft.com/en-us/azure/foundry/foundry-models/concepts/models-sold-directly-by-azure
 - Foundry Models from partners and community: https://learn.microsoft.com/en-us/azure/foundry/foundry-models/concepts/models-from-partners
+- Azure Document Intelligence in Foundry Tools: https://learn.microsoft.com/en-us/azure/ai-services/document-intelligence/overview?view=doc-intel-4.0.0
+- Azure Vision in Foundry Tools: https://learn.microsoft.com/en-us/azure/ai-services/computer-vision/overview
+- Azure AI Content Safety: https://learn.microsoft.com/en-us/azure/ai-services/content-safety/overview
 
 ## Actualizar precios
 
