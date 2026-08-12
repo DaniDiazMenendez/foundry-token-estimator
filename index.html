@@ -412,9 +412,12 @@
               <select id="serviceRegion"></select>
             </label>
             <label>
-              Tipo de precio oficial
+              Precio Azure usado
               <select id="serviceMeter"></select>
             </label>
+            <p class="muted small" id="priceHint">
+              Uso pago por uso recomendado. Azure publica otros medidores por región, plan gratuito o commitment tier; los oculto para no convertir esto en una autopsia de billing.
+            </p>
             <label>
               <span id="serviceQuestion">Cantidad mensual</span>
               <input id="serviceQuantity" type="number" min="0" step="1" value="10000">
@@ -905,8 +908,9 @@
       copyEstimate: document.getElementById("copyEstimate")
     };
 
-    const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 4 });
-    const integer = new Intl.NumberFormat("en-US");
+    const decimalMoney = new Intl.NumberFormat("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const money = { format: value => `USD ${decimalMoney.format(Number(value || 0))}` };
+    const integer = new Intl.NumberFormat("es-AR");
 
     function searchable(item) {
       return [
@@ -1004,6 +1008,7 @@
       if (service.id === "ocr-read-analyzer" && text.includes("face")) score -= 60;
       if (service.id === "ocr-read-analyzer" && text.includes("document intelligence")) score += 30;
       if (service.id === "ocr-read-analyzer" && text.includes("read")) score += 25;
+      if (text.includes("free")) score -= 120;
       if (text.includes("commitment")) score -= 80;
       if (text.includes("disconnected")) score -= 20;
       return score;
@@ -1132,7 +1137,12 @@
       if (!state.selectedService) return;
       const region = els.serviceRegion.value;
       const pool = servicePool(state.selectedService).filter(item => !region || item.armRegionName === region);
-      const compact = uniqueBy(pool, item => `${item.productName}|${item.skuName}|${item.meterName}|${item.unitOfMeasure}|${item.retailPrice}`)
+      let compact = uniqueBy(pool, item => `${item.productName}|${item.skuName}|${item.meterName}|${item.unitOfMeasure}|${item.retailPrice}`)
+        .filter(item => !/free|commitment|disconnected/i.test(`${item.productName} ${item.skuName} ${item.meterName}`));
+      if (!compact.length) {
+        compact = uniqueBy(pool, item => `${item.productName}|${item.skuName}|${item.meterName}|${item.unitOfMeasure}|${item.retailPrice}`);
+      }
+      compact = compact
         .slice(0, 24);
       els.serviceMeter.innerHTML = compact.map(item => `<option value="${item.id}">${escapeHtml(labelFor(item))}</option>`).join("");
     }
