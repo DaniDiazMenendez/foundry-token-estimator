@@ -1,0 +1,800 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculadora de estimaciones de tokens - Microsoft Foundry</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23b11f4b'/%3E%3Cpath d='M8 10h16v3H8zm0 5h10v3H8zm0 5h16v3H8z' fill='white'/%3E%3C/svg%3E">
+  <script>
+    (() => {
+      const param = new URLSearchParams(window.location.search).get("scoutTheme");
+      const theme =
+        param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+  <style>
+    :root {
+      color-scheme: light;
+      --cp-bg: #f7f4ef;
+      --cp-bg-elevated: #fcfbf8;
+      --cp-surface: #ffffff;
+      --cp-surface-soft: #f5f5f5;
+      --cp-border: #dedede;
+      --cp-border-strong: #919191;
+      --cp-text: #242424;
+      --cp-text-muted: #5c5c5c;
+      --cp-text-soft: #6f6f6f;
+      --cp-accent: #b11f4b;
+      --cp-accent-hover: #9a1a41;
+      --cp-accent-soft: rgba(177, 31, 75, 0.08);
+      --cp-accent-fg: #ffffff;
+      --cp-success: #16a34a;
+      --cp-danger: #dc2626;
+      --cp-warning: #f59e0b;
+      --cp-link: #0078d4;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+      --cp-overlay: rgba(255, 255, 255, 0.8);
+      --cp-panel: rgba(255, 255, 255, 0.86);
+      --cp-panel-strong: rgba(255, 255, 255, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.55);
+      --cp-highlight: rgba(177, 31, 75, 0.12);
+    }
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --cp-bg: #3d3b3a;
+      --cp-bg-elevated: #343231;
+      --cp-surface: #292929;
+      --cp-surface-soft: #2e2e2e;
+      --cp-border: #474747;
+      --cp-border-strong: #5f5f5f;
+      --cp-text: #dedede;
+      --cp-text-muted: #919191;
+      --cp-text-soft: #b0b0b0;
+      --cp-accent: #fd8ea1;
+      --cp-accent-hover: #fb7b91;
+      --cp-accent-soft: rgba(253, 142, 161, 0.14);
+      --cp-accent-fg: #1a1a1a;
+      --cp-success: #4ade80;
+      --cp-danger: #f87171;
+      --cp-warning: #fbbf24;
+      --cp-link: #4da6ff;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+      --cp-overlay: rgba(41, 41, 41, 0.88);
+      --cp-panel: rgba(41, 41, 41, 0.72);
+      --cp-panel-strong: rgba(41, 41, 41, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.04);
+      --cp-highlight: rgba(253, 142, 161, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--cp-bg);
+      color: var(--cp-text);
+      font-family: "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    a {
+      color: var(--cp-link);
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    .shell {
+      width: min(1440px, 100%);
+      margin: 0 auto;
+      padding: 32px;
+    }
+
+    .hero,
+    .card {
+      background: var(--cp-surface);
+      border: 1px solid var(--cp-border);
+      border-radius: 16px;
+      box-shadow: var(--cp-shadow);
+    }
+
+    .hero {
+      padding: 28px;
+      margin-bottom: 20px;
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+      line-height: 1.15;
+    }
+
+    h1 {
+      font-size: clamp(1.8rem, 4vw, 3.2rem);
+      max-width: 980px;
+    }
+
+    h2 {
+      font-size: 1.25rem;
+    }
+
+    h3 {
+      font-size: 1rem;
+    }
+
+    .muted {
+      color: var(--cp-text-muted);
+    }
+
+    .hero p {
+      max-width: 980px;
+      color: var(--cp-text-muted);
+      font-size: 1.02rem;
+      margin: 16px 0 0;
+    }
+
+    .source-strip,
+    .toolbar,
+    .summary-grid,
+    .row-grid,
+    .source-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .source-strip {
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      margin-top: 20px;
+    }
+
+    .source-pill {
+      background: var(--cp-surface-soft);
+      border: 1px solid var(--cp-border);
+      border-radius: 0.625rem;
+      padding: 12px;
+    }
+
+    .toolbar {
+      grid-template-columns: 1.4fr repeat(3, minmax(160px, 0.6fr));
+      align-items: end;
+      margin: 20px 0;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--cp-text-muted);
+      font-size: 0.88rem;
+      font-weight: 600;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 10px 12px;
+      color: var(--cp-text);
+      background: var(--cp-surface);
+      border: 1px solid var(--cp-border-strong);
+      border-radius: 0.625rem;
+      outline: none;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--cp-accent);
+      box-shadow: 0 0 0 3px var(--cp-accent-soft);
+    }
+
+    .button {
+      border: 1px solid var(--cp-accent);
+      background: var(--cp-accent);
+      color: var(--cp-accent-fg);
+      border-radius: 0.625rem;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .button:hover {
+      background: var(--cp-accent-hover);
+    }
+
+    .button.secondary {
+      background: var(--cp-surface);
+      color: var(--cp-accent);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 360px;
+      gap: 20px;
+    }
+
+    .card {
+      padding: 18px;
+    }
+
+    .summary-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .metric {
+      background: var(--cp-surface-soft);
+      border: 1px solid var(--cp-border);
+      border-radius: 0.625rem;
+      padding: 14px;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 1.35rem;
+      margin-top: 4px;
+    }
+
+    .process-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .step {
+      background: var(--cp-bg-elevated);
+      border: 1px solid var(--cp-border);
+      border-radius: 16px;
+      padding: 14px;
+    }
+
+    .row-grid {
+      grid-template-columns: 1.1fr 1.6fr 0.75fr 0.75fr 0.75fr auto;
+      align-items: end;
+    }
+
+    .cost {
+      font-size: 1.1rem;
+      font-weight: 800;
+      text-align: right;
+    }
+
+    .links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .link-chip {
+      border: 1px solid var(--cp-border);
+      border-radius: 999px;
+      padding: 6px 10px;
+      background: var(--cp-surface);
+      font-size: 0.85rem;
+      text-decoration: none;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid var(--cp-border);
+      border-radius: 0.625rem;
+      margin-top: 12px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 780px;
+    }
+
+    th,
+    td {
+      padding: 10px;
+      border-bottom: 1px solid var(--cp-border);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      color: var(--cp-text-muted);
+      background: var(--cp-surface-soft);
+      font-size: 0.84rem;
+    }
+
+    code {
+      font-family: Consolas, "Courier New", Courier, monospace;
+      color: var(--cp-text);
+    }
+
+    .notice {
+      border: 1px solid var(--cp-warning);
+      background: var(--cp-highlight);
+      border-radius: 0.625rem;
+      padding: 12px;
+      color: var(--cp-text);
+      margin-top: 12px;
+    }
+
+    .danger {
+      color: var(--cp-danger);
+    }
+
+    .small {
+      font-size: 0.86rem;
+    }
+
+    @media (max-width: 1100px) {
+      .layout,
+      .toolbar,
+      .row-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .cost {
+        text-align: left;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .shell {
+        padding: 16px;
+      }
+
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <h1>Calculadora de estimaciones de tokens y costos para Microsoft Foundry</h1>
+      <p>
+        Arme un proceso por pasos, seleccione medidores oficiales de Foundry Models y estime costo mensual en USD. Cada línea conserva enlace al medidor exacto de Azure Retail Prices, al pricing público y a la documentación de Foundry que respalda disponibilidad/catálogo.
+      </p>
+      <div class="source-strip" id="sourceStrip"></div>
+      <div class="notice small">
+        Esta herramienta usa precios retail públicos sin descuentos, compromisos, reservas, impuestos ni acuerdos privados. Si el cliente tiene contrato o beneficio, aplíquelo fuera de esta calculadora. Honestidad al 90%, como corresponde.
+      </div>
+    </section>
+
+    <section class="toolbar card">
+      <label>
+        Buscar servicio, modelo o medidor
+        <input id="searchInput" placeholder="Ej: GPT 5 Mini input, Claude, Mistral, embedding">
+      </label>
+      <label>
+        Producto
+        <select id="productFilter"></select>
+      </label>
+      <label>
+        Región Azure
+        <select id="regionFilter"></select>
+      </label>
+      <button class="button" id="addStep">Agregar paso</button>
+    </section>
+
+    <section class="layout">
+      <div>
+        <article class="card">
+          <h2>Proceso de estimación</h2>
+          <p class="muted small">
+            Use una línea por componente del proceso: entrada, salida, cached input, embeddings, imagen, audio o cualquier medidor oficial cargado. Las unidades se calculan según <code>unitOfMeasure</code> del medidor.
+          </p>
+          <div class="process-list" id="steps"></div>
+        </article>
+
+        <article class="card" style="margin-top: 20px;">
+          <h2>Medidores oficiales encontrados</h2>
+          <p class="muted small" id="meterCount"></p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th>SKU / medidor</th>
+                  <th>Región</th>
+                  <th>Unidad</th>
+                  <th>Precio retail</th>
+                  <th>Fuente</th>
+                </tr>
+              </thead>
+              <tbody id="meterTable"></tbody>
+            </table>
+          </div>
+        </article>
+      </div>
+
+      <aside class="card">
+        <h2>Resumen</h2>
+        <div class="summary-grid" style="margin-top: 12px;">
+          <div class="metric">
+            <span class="muted small">Costo mensual</span>
+            <strong id="monthlyTotal">USD 0.00</strong>
+          </div>
+          <div class="metric">
+            <span class="muted small">Costo por ejecución</span>
+            <strong id="runTotal">USD 0.00</strong>
+          </div>
+          <div class="metric">
+            <span class="muted small">Tokens/unidades por ejecución</span>
+            <strong id="unitTotal">0</strong>
+          </div>
+          <div class="metric">
+            <span class="muted small">Pasos</span>
+            <strong id="stepTotal">0</strong>
+          </div>
+        </div>
+        <div class="notice small">
+          Para estimaciones de arquitectura: modele cada llamada del flujo. Ejemplo: clasificación, extracción, RAG, respuesta final y embeddings separados. Sí, parece más trabajo. También parece más correcto.
+        </div>
+        <div style="margin-top: 14px; display: grid; gap: 10px;">
+          <button class="button secondary" id="copySummary">Copiar resumen</button>
+          <button class="button secondary" id="downloadCsv">Descargar CSV</button>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <template id="stepTemplate">
+    <div class="step">
+      <div class="row-grid">
+        <label>
+          Paso del proceso
+          <input class="step-name" placeholder="Ej: Respuesta final">
+        </label>
+        <label>
+          Medidor oficial
+          <select class="step-meter"></select>
+        </label>
+        <label>
+          Cantidad por ejecución
+          <input class="step-quantity" type="number" min="0" step="1" value="1000000">
+        </label>
+        <label>
+          Ejecuciones/mes
+          <input class="step-runs" type="number" min="0" step="1" value="1">
+        </label>
+        <label>
+          Multiplicador
+          <input class="step-factor" type="number" min="0" step="0.01" value="1">
+        </label>
+        <div>
+          <div class="cost">USD 0.00</div>
+          <button class="button secondary remove-step" style="margin-top: 8px;">Quitar</button>
+        </div>
+      </div>
+      <div class="links"></div>
+    </div>
+  </template>
+
+  <script>
+    const DATA_URL = "data/prices.json";
+    const DOCS = {
+      retailApi: "https://learn.microsoft.com/en-us/rest/api/cost-management/retail-prices/azure-retail-prices",
+      azureOpenAiPricing: "https://azure.microsoft.com/en-us/pricing/details/azure-openai/",
+      foundry: "https://learn.microsoft.com/en-us/azure/foundry/what-is-foundry",
+      soldByAzure: "https://learn.microsoft.com/en-us/azure/foundry/foundry-models/concepts/models-sold-directly-by-azure",
+      partners: "https://learn.microsoft.com/en-us/azure/foundry/foundry-models/concepts/models-from-partners"
+    };
+
+    const state = {
+      prices: [],
+      filtered: [],
+      metadata: null
+    };
+
+    const els = {
+      sourceStrip: document.getElementById("sourceStrip"),
+      searchInput: document.getElementById("searchInput"),
+      productFilter: document.getElementById("productFilter"),
+      regionFilter: document.getElementById("regionFilter"),
+      addStep: document.getElementById("addStep"),
+      steps: document.getElementById("steps"),
+      meterCount: document.getElementById("meterCount"),
+      meterTable: document.getElementById("meterTable"),
+      monthlyTotal: document.getElementById("monthlyTotal"),
+      runTotal: document.getElementById("runTotal"),
+      unitTotal: document.getElementById("unitTotal"),
+      stepTotal: document.getElementById("stepTotal"),
+      copySummary: document.getElementById("copySummary"),
+      downloadCsv: document.getElementById("downloadCsv"),
+      template: document.getElementById("stepTemplate")
+    };
+
+    const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 6 });
+    const integer = new Intl.NumberFormat("en-US");
+
+    function meterDocUrl(meterId) {
+      const filter = encodeURIComponent(`meterId eq '${meterId}'`);
+      return `https://prices.azure.com/api/retail/prices?api-version=2023-01-01-preview&$filter=${filter}`;
+    }
+
+    function docsFor(item) {
+      const docs = [
+        ["Retail Prices API", meterDocUrl(item.meterId)],
+        ["API docs", DOCS.retailApi],
+        ["Foundry", DOCS.foundry]
+      ];
+      if ((item.productName || "").toLowerCase().includes("openai")) {
+        docs.push(["Azure OpenAI pricing", DOCS.azureOpenAiPricing]);
+        docs.push(["Modelos vendidos por Azure", DOCS.soldByAzure]);
+      } else {
+        docs.push(["Modelos partners/community", DOCS.partners]);
+      }
+      return docs;
+    }
+
+    function unitDivisor(unitOfMeasure) {
+      const normalized = String(unitOfMeasure || "").toLowerCase();
+      if (normalized.includes("1m")) return 1000000;
+      if (normalized.includes("1k")) return 1000;
+      return 1;
+    }
+
+    function calculateCost(item, quantity, runs, factor) {
+      return (Number(quantity) / unitDivisor(item.unitOfMeasure)) * Number(item.retailPrice) * Number(runs) * Number(factor);
+    }
+
+    function calculateRunCost(item, quantity, factor) {
+      return (Number(quantity) / unitDivisor(item.unitOfMeasure)) * Number(item.retailPrice) * Number(factor);
+    }
+
+    function searchable(item) {
+      return [
+        item.productName,
+        item.skuName,
+        item.meterName,
+        item.armRegionName,
+        item.location,
+        item.serviceName,
+        item.unitOfMeasure
+      ].join(" ").toLowerCase();
+    }
+
+    function optionLabel(item) {
+      return `${item.productName} | ${item.skuName} | ${item.armRegionName} | ${money.format(item.retailPrice)} / ${item.unitOfMeasure}`;
+    }
+
+    function populateFilters() {
+      const products = [...new Set(state.prices.map(item => item.productName).filter(Boolean))].sort();
+      const regions = [...new Set(state.prices.map(item => item.armRegionName).filter(Boolean))].sort();
+      els.productFilter.innerHTML = `<option value="">Todos</option>${products.map(value => `<option>${escapeHtml(value)}</option>`).join("")}`;
+      els.regionFilter.innerHTML = `<option value="">Todas</option>${regions.map(value => `<option>${escapeHtml(value)}</option>`).join("")}`;
+    }
+
+    function applyFilters() {
+      const term = els.searchInput.value.trim().toLowerCase();
+      const product = els.productFilter.value;
+      const region = els.regionFilter.value;
+      state.filtered = state.prices.filter(item => {
+        if (product && item.productName !== product) return false;
+        if (region && item.armRegionName !== region) return false;
+        if (term && !searchable(item).includes(term)) return false;
+        return true;
+      }).slice(0, 500);
+      renderMeters();
+      updateStepOptions();
+    }
+
+    function renderSources() {
+      const generated = state.metadata?.generatedAt ? new Date(state.metadata.generatedAt).toLocaleString("es-AR") : "sin fecha";
+      const sources = [
+        ["Precios", "Azure Retail Prices API", DOCS.retailApi],
+        ["Pricing", "Azure OpenAI pricing", DOCS.azureOpenAiPricing],
+        ["Catálogo", "Foundry Models sold by Azure", DOCS.soldByAzure],
+        ["Partners", "Foundry Models from partners", DOCS.partners]
+      ];
+      els.sourceStrip.innerHTML = sources.map(([label, text, href]) => `
+        <div class="source-pill">
+          <div class="muted small">${label}</div>
+          <a href="${href}" target="_blank" rel="noreferrer">${text}</a>
+        </div>
+      `).join("") + `
+        <div class="source-pill">
+          <div class="muted small">Dataset</div>
+          <strong>${integer.format(state.prices.length)} medidores</strong><br>
+          <span class="small muted">Actualizado: ${generated}</span>
+        </div>
+      `;
+    }
+
+    function renderMeters() {
+      els.meterCount.textContent = `${integer.format(state.filtered.length)} medidores visibles de ${integer.format(state.prices.length)} cargados.`;
+      els.meterTable.innerHTML = state.filtered.slice(0, 80).map(item => `
+        <tr>
+          <td>${escapeHtml(item.productName)}<br><span class="muted small">${escapeHtml(item.serviceName)}</span></td>
+          <td><code>${escapeHtml(item.skuName)}</code><br><span class="small">${escapeHtml(item.meterName)}</span></td>
+          <td>${escapeHtml(item.armRegionName)}<br><span class="muted small">${escapeHtml(item.location)}</span></td>
+          <td>${escapeHtml(item.unitOfMeasure)}</td>
+          <td>${money.format(item.retailPrice)}</td>
+          <td><a href="${meterDocUrl(item.meterId)}" target="_blank" rel="noreferrer">meterId</a></td>
+        </tr>
+      `).join("");
+    }
+
+    function updateStepOptions() {
+      const options = state.filtered.map(item => `<option value="${item.id}">${escapeHtml(optionLabel(item))}</option>`).join("");
+      document.querySelectorAll(".step-meter").forEach(select => {
+        const current = select.value;
+        select.innerHTML = options;
+        if ([...select.options].some(option => option.value === current)) {
+          select.value = current;
+        }
+      });
+      recalcAll();
+    }
+
+    function addStep(defaultName = "") {
+      const fragment = els.template.content.cloneNode(true);
+      const node = fragment.querySelector(".step");
+      node.querySelector(".step-name").value = defaultName;
+      els.steps.appendChild(node);
+      node.querySelectorAll("input, select").forEach(input => input.addEventListener("input", recalcAll));
+      node.querySelector(".step-meter").addEventListener("change", recalcAll);
+      node.querySelector(".remove-step").addEventListener("click", () => {
+        node.remove();
+        recalcAll();
+      });
+      updateStepOptions();
+    }
+
+    function rowData(node) {
+      const item = state.prices.find(price => price.id === node.querySelector(".step-meter").value);
+      if (!item) return null;
+      const quantity = Number(node.querySelector(".step-quantity").value || 0);
+      const runs = Number(node.querySelector(".step-runs").value || 0);
+      const factor = Number(node.querySelector(".step-factor").value || 0);
+      const name = node.querySelector(".step-name").value || item.meterName;
+      return {
+        node,
+        item,
+        name,
+        quantity,
+        runs,
+        factor,
+        monthlyCost: calculateCost(item, quantity, runs, factor),
+        runCost: calculateRunCost(item, quantity, factor)
+      };
+    }
+
+    function recalcAll() {
+      const rows = [...document.querySelectorAll(".step")].map(rowData).filter(Boolean);
+      let monthly = 0;
+      let run = 0;
+      let units = 0;
+
+      rows.forEach(row => {
+        monthly += row.monthlyCost;
+        run += row.runCost;
+        units += row.quantity * row.factor;
+        row.node.querySelector(".cost").textContent = money.format(row.monthlyCost);
+        row.node.querySelector(".links").innerHTML = docsFor(row.item)
+          .map(([text, href]) => `<a class="link-chip" href="${href}" target="_blank" rel="noreferrer">${text}</a>`)
+          .join("");
+      });
+
+      els.monthlyTotal.textContent = money.format(monthly);
+      els.runTotal.textContent = money.format(run);
+      els.unitTotal.textContent = integer.format(units);
+      els.stepTotal.textContent = integer.format(rows.length);
+    }
+
+    function currentRows() {
+      return [...document.querySelectorAll(".step")].map(rowData).filter(Boolean);
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      })[char]);
+    }
+
+    function csvValue(value) {
+      return `"${String(value ?? "").replace(/"/g, '""')}"`;
+    }
+
+    function buildCsv() {
+      const header = [
+        "paso",
+        "serviceName",
+        "productName",
+        "skuName",
+        "meterName",
+        "region",
+        "unitOfMeasure",
+        "retailPriceUsd",
+        "quantityPerRun",
+        "runsPerMonth",
+        "multiplier",
+        "costPerRunUsd",
+        "monthlyCostUsd",
+        "retailPriceMeterUrl",
+        "documentation"
+      ];
+      const rows = currentRows().map(row => [
+        row.name,
+        row.item.serviceName,
+        row.item.productName,
+        row.item.skuName,
+        row.item.meterName,
+        row.item.armRegionName,
+        row.item.unitOfMeasure,
+        row.item.retailPrice,
+        row.quantity,
+        row.runs,
+        row.factor,
+        row.runCost,
+        row.monthlyCost,
+        meterDocUrl(row.item.meterId),
+        docsFor(row.item).map(([text, href]) => `${text}: ${href}`).join(" | ")
+      ]);
+      return [header, ...rows].map(row => row.map(csvValue).join(",")).join("\n");
+    }
+
+    function copySummary() {
+      const rows = currentRows();
+      const total = rows.reduce((sum, row) => sum + row.monthlyCost, 0);
+      const text = [
+        "Estimación mensual Foundry Models",
+        `Total: ${money.format(total)}`,
+        "",
+        ...rows.map(row => [
+          `Paso: ${row.name}`,
+          `Medidor: ${row.item.productName} / ${row.item.skuName} / ${row.item.meterName}`,
+          `Región: ${row.item.armRegionName}`,
+          `Cantidad por ejecución: ${row.quantity}`,
+          `Ejecuciones/mes: ${row.runs}`,
+          `Costo mensual: ${money.format(row.monthlyCost)}`,
+          `Fuente precio: ${meterDocUrl(row.item.meterId)}`,
+          `Docs: ${docsFor(row.item).map(([label, href]) => `${label} ${href}`).join(" | ")}`
+        ].join("\n"))
+      ].join("\n\n");
+      navigator.clipboard.writeText(text);
+    }
+
+    function downloadCsv() {
+      const blob = new Blob([buildCsv()], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "foundry-token-estimate.csv";
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    async function init() {
+      try {
+        const response = await fetch(DATA_URL);
+        if (!response.ok) throw new Error(`No se pudo cargar ${DATA_URL}`);
+        const data = await response.json();
+        state.metadata = data.metadata;
+        state.prices = data.items.map((item, index) => ({ ...item, id: `${item.meterId}-${index}` }));
+        state.filtered = state.prices.slice(0, 500);
+        populateFilters();
+        renderSources();
+        applyFilters();
+        addStep("Paso 1");
+      } catch (error) {
+        els.steps.innerHTML = `<div class="notice danger">Error cargando precios oficiales: ${escapeHtml(error.message)}. Ejecute <code>scripts/refresh-prices.ps1</code> para regenerar <code>data/prices.json</code>.</div>`;
+      }
+    }
+
+    els.searchInput.addEventListener("input", applyFilters);
+    els.productFilter.addEventListener("change", applyFilters);
+    els.regionFilter.addEventListener("change", applyFilters);
+    els.addStep.addEventListener("click", () => addStep(`Paso ${document.querySelectorAll(".step").length + 1}`));
+    els.copySummary.addEventListener("click", copySummary);
+    els.downloadCsv.addEventListener("click", downloadCsv);
+
+    init();
+  </script>
+</body>
+</html>
