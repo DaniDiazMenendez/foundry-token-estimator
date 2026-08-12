@@ -483,6 +483,7 @@
       documentIntelligence: "https://learn.microsoft.com/en-us/azure/ai-services/document-intelligence/overview?view=doc-intel-4.0.0",
       documentIntelligencePricing: "https://azure.microsoft.com/en-us/pricing/details/document-intelligence/",
       vision: "https://learn.microsoft.com/en-us/azure/ai-services/computer-vision/overview",
+      visionOcr: "https://learn.microsoft.com/en-us/azure/ai-services/computer-vision/concept-ocr",
       visionPricing: "https://azure.microsoft.com/en-us/pricing/details/computer-vision/",
       contentSafety: "https://learn.microsoft.com/en-us/azure/ai-services/content-safety/overview",
       contentSafetyPricing: "https://azure.microsoft.com/en-us/pricing/details/content-safety/",
@@ -707,7 +708,8 @@
             simpleUnit: "imágenes o páginas/mes",
             include: ["document intelligence", "vision"],
             prefer: ["read", "ocr", "standard", "transactions"],
-            docs: [["Document Intelligence docs", DOCS.documentIntelligence], ["Vision docs", DOCS.vision], ["Document Intelligence pricing", DOCS.documentIntelligencePricing]]
+            explanation: "Para documentos, PDFs, Office files o scans text-heavy, Foundry usa Document Intelligence Read OCR. Para fotos livianas/no documentales como carteles, etiquetas o screenshots, Azure Vision OCR es la opción documentada.",
+            docs: [["Document Intelligence Read OCR", "https://learn.microsoft.com/en-us/azure/ai-services/document-intelligence/prebuilt/read?view=doc-intel-4.0.0"], ["Azure Vision OCR", DOCS.visionOcr], ["Document Intelligence pricing", DOCS.documentIntelligencePricing]]
           },
           {
             id: "text-analytics-health",
@@ -987,7 +989,35 @@
     }
 
     function cost(item, quantity) {
-      return (Number(quantity) / unitDivisor(item.unitOfMeasure)) * Number(item.retailPrice || 0);
+      return tieredCost(item, quantity).total;
+    }
+
+    function meterTiers(item) {
+      const all = [...state.servicePrices, ...state.prices];
+      return all
+        .filter(candidate => candidate.meterId === item.meterId && candidate.armRegionName === item.armRegionName)
+        .sort((a, b) => Number(a.tierMinimumUnits || 0) - Number(b.tierMinimumUnits || 0));
+    }
+
+    function tieredCost(item, quantity) {
+      const billingUnits = Number(quantity) / unitDivisor(item.unitOfMeasure);
+      const tiers = meterTiers(item);
+      if (!tiers.length) {
+        return { total: 0, billingUnits, tiers: [] };
+      }
+      let total = 0;
+      const lines = [];
+      tiers.forEach((tier, index) => {
+        const start = Number(tier.tierMinimumUnits || 0);
+        const end = index + 1 < tiers.length ? Number(tiers[index + 1].tierMinimumUnits || 0) : Infinity;
+        const used = Math.max(0, Math.min(billingUnits, end) - start);
+        if (used > 0) {
+          const lineCost = used * Number(tier.retailPrice || 0);
+          total += lineCost;
+          lines.push({ tier, used, lineCost, start, end });
+        }
+      });
+      return { total, billingUnits, tiers: lines };
     }
 
     function servicePool(service) {
@@ -1010,6 +1040,7 @@
       if (service.id === "ocr-read-analyzer" && text.includes("read")) score += 25;
       if (text.includes("free")) score -= 120;
       if (text.includes("commitment")) score -= 80;
+      if (text.includes("batch")) score -= 25;
       if (text.includes("disconnected")) score -= 20;
       return score;
     }
@@ -1133,18 +1164,34 @@
       return `${friendlyMeterText(item.productName)} / ${friendlyMeterText(item.skuName)} / ${money.format(item.retailPrice)} cada ${expandedUnit(item.unitOfMeasure)}`;
     }
 
+    function friendlyOperation(item) {
+      const name = friendlyMeterText(item.meterName || item.skuName || "");
+      return name
+        .replace(/^S0\s+/i, "")
+        .replace(/^Batch\s+/i, "Batch ")
+        .replace(/\s+Pages$/i, " pages")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
     function populateServiceMeters() {
       if (!state.selectedService) return;
       const region = els.serviceRegion.value;
       const pool = servicePool(state.selectedService).filter(item => !region || item.armRegionName === region);
-      let compact = uniqueBy(pool, item => `${item.productName}|${item.skuName}|${item.meterName}|${item.unitOfMeasure}|${item.retailPrice}`)
+      let compact = uniqueBy(pool, item => `${item.productName}|${item.skuName}|${item.meterName}|${item.unitOfMeasure}|${item.meterId}`)
         .filter(item => !/free|commitment|disconnected/i.test(`${item.productName} ${item.skuName} ${item.meterName}`));
       if (!compact.length) {
         compact = uniqueBy(pool, item => `${item.productName}|${item.skuName}|${item.meterName}|${item.unitOfMeasure}|${item.retailPrice}`);
       }
       compact = compact
         .slice(0, 24);
-      els.serviceMeter.innerHTML = compact.map(item => `<option value="${item.id}">${escapeHtml(labelFor(item))}</option>`).join("");
+      els.serviceMeter.innerHTML = compact.map(item => {
+        const tiers = meterTiers(item);
+        const first = tiers[0] || item;
+        const hasTier = tiers.length > 1;
+        const tierText = hasTier ? " · precio por tramos" : "";
+        return `<option value="${item.id}">${escapeHtml(`${friendlyOperation(item)} · ${money.format(first.retailPrice)} cada ${expandedUnit(item.unitOfMeasure)}${tierText}`)}</option>`;
+      }).join("");
     }
 
     function selectedServiceMeter() {
@@ -1155,15 +1202,17 @@
       const item = selectedServiceMeter();
       if (!item) return;
       const quantity = Number(els.serviceQuantity.value || 0);
-      const total = cost(item, quantity);
+      const tierResult = tieredCost(item, quantity);
+      const total = tierResult.total;
       const billingUnit = expandedUnit(item.unitOfMeasure);
-      const calculatedUnits = quantity / unitDivisor(item.unitOfMeasure);
+      const calculatedUnits = tierResult.billingUnits;
       const tokenText = isTokenMeter(item)
         ? `<div class="answer-card"><span class="muted small">Tokens estimados</span><strong>${integer.format(quantity)} tokens/mes</strong><div class="chips"><a class="chip" href="${meterUrl(item.meterId)}" target="_blank" rel="noreferrer">Fuente precio</a></div></div>`
         : `<div class="answer-card"><span class="muted small">Tokens estimados</span><strong>No aplica para este medidor</strong><small class="muted">Este servicio se cobra por ${billingUnit} ${isCharacterMeter(item) ? "caracteres" : isHourMeter(item) ? "hora" : isTransactionMeter(item) ? "transacciones/registros/páginas" : "unidades"}, no por tokens.</small></div>`;
       els.serviceTotal.textContent = money.format(total);
       els.serviceBreakdown.innerHTML = `
         <div class="answer">
+          ${state.selectedService?.explanation ? `<div class="answer-card"><span class="muted small">Qué estás estimando</span><strong>${escapeHtml(friendlyOperation(item))}</strong><small>${escapeHtml(state.selectedService.explanation)}</small><div class="chips">${state.selectedService.docs.map(([label, href]) => `<a class="chip" href="${href}" target="_blank" rel="noreferrer">${escapeHtml(label)}</a>`).join("")}</div></div>` : ""}
           <div class="answer-card">
             <span class="muted small">Cantidad mensual ingresada</span>
             <strong>${integer.format(quantity)} ${escapeHtml(state.selectedService?.simpleUnit || "unidades/mes")}</strong>
@@ -1173,12 +1222,13 @@
           <div class="answer-card">
             <span class="muted small">Precio aproximado</span>
             <strong>${money.format(total)} / mes</strong>
-            <small>Fórmula: ${integer.format(quantity)} ÷ ${billingUnit} × ${money.format(item.retailPrice)}</small>
+            <small>${tierResult.tiers.length > 1 ? "Calculado por tramos oficiales del medidor." : `Fórmula: ${integer.format(quantity)} ÷ ${billingUnit} × ${money.format(item.retailPrice)}`}</small>
             <div class="chips"><a class="chip" href="${meterUrl(item.meterId)}" target="_blank" rel="noreferrer">Ver medidor oficial</a><a class="chip" href="${DOCS.retail}" target="_blank" rel="noreferrer">Retail Prices API</a></div>
           </div>
         </div>
         <div class="line"><span>Unidad oficial de cobro</span><strong>${billingUnit}</strong><small>Unidad completa usada para calcular el precio retail oficial.</small></div>
         <div class="line"><span>Cantidad facturable</span><strong>${integer.format(calculatedUnits)}</strong><small>${integer.format(quantity)} unidades de cliente equivalen a ${integer.format(calculatedUnits)} bloques de cobro.</small></div>
+        ${tierResult.tiers.map(line => `<div class="line"><span>Tramo aplicado desde ${integer.format(line.start)} bloques</span><strong>${integer.format(line.used)} × ${money.format(line.tier.retailPrice)}</strong><small>${line.end === Infinity ? "Tramo superior" : `Hasta ${integer.format(line.end)} bloques facturables`}</small></div>`).join("")}
         <div class="line"><span>Medidor usado</span><strong>${escapeHtml(friendlyMeterText(item.meterName))}</strong></div>
       `;
       const docs = [["Retail meter", meterUrl(item.meterId)], ["Retail Prices API", DOCS.retail], ...(state.selectedService?.docs || [])];

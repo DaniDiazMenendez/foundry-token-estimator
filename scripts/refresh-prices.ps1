@@ -47,6 +47,7 @@ function Select-PricingFields {
         if ($item.unitOfMeasure -match "Token|1M|1K|Second|Hour|Transaction|Image|Character") {
             $selected.Add([pscustomobject]@{
                 currencyCode = $item.currencyCode
+                tierMinimumUnits = [double]$item.tierMinimumUnits
                 serviceName = $item.serviceName
                 productName = $item.productName
                 skuName = $item.skuName
