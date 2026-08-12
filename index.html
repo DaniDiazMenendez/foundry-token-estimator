@@ -437,7 +437,55 @@
 
         <section class="card hidden" id="modelPanel">
           <h2>Estimación por modelo</h2>
-          <p class="muted small">Calculá input/output tokens por mes usando medidores oficiales de Foundry Models.</p>
+          <p class="muted small">Primero estimá tokens del proceso; después esos tokens se convierten a USD usando medidores oficiales de Foundry Models.</p>
+          <div class="form-grid" style="margin-top: 14px;">
+            <label>
+              Caso de uso / proceso
+              <select id="tokenPreset">
+                <option value="chat">Chat simple / FAQ</option>
+                <option value="rag">RAG sobre documentos</option>
+                <option value="summary">Resumen de documentos</option>
+                <option value="extract">Extracción / clasificación</option>
+                <option value="agent">Agente con iteraciones</option>
+              </select>
+            </label>
+            <label>
+              <span id="tokenUnitLabel">Interacciones por mes</span>
+              <input id="monthlyUnits" type="number" min="0" step="1" value="10000">
+            </label>
+            <div class="two">
+              <label>
+                Palabras de entrada por caso
+                <input id="inputWords" type="number" min="0" step="1" value="120">
+              </label>
+              <label>
+                Palabras de salida esperada
+                <input id="outputWords" type="number" min="0" step="1" value="220">
+              </label>
+            </div>
+            <div class="two">
+              <label>
+                Páginas de contexto por caso
+                <input id="contextPages" type="number" min="0" step="1" value="0">
+              </label>
+              <label>
+                Palabras por página
+                <input id="wordsPerPage" type="number" min="0" step="1" value="500">
+              </label>
+            </div>
+            <div class="two">
+              <label>
+                Iteraciones por caso
+                <input id="iterationsPerCase" type="number" min="1" step="1" value="1">
+              </label>
+              <label>
+                Margen de seguridad %
+                <input id="safetyMargin" type="number" min="0" step="1" value="20">
+              </label>
+            </div>
+            <button class="button secondary" id="applyTokenEstimate">Usar estos tokens para calcular USD</button>
+          </div>
+          <div class="answer" id="tokenBreakdown"></div>
           <div class="form-grid" style="margin-top: 14px;">
             <label>
               Modelo o familia
@@ -480,6 +528,8 @@
       soldByAzure: "https://learn.microsoft.com/en-us/azure/foundry/foundry-models/concepts/models-sold-directly-by-azure",
       partners: "https://learn.microsoft.com/en-us/azure/foundry/foundry-models/concepts/models-from-partners",
       openAiPricing: "https://azure.microsoft.com/en-us/pricing/details/azure-openai/",
+      chatCompletions: "https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/chatgpt",
+      embeddings: "https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/embeddings",
       documentIntelligence: "https://learn.microsoft.com/en-us/azure/ai-services/document-intelligence/overview?view=doc-intel-4.0.0",
       documentIntelligencePricing: "https://azure.microsoft.com/en-us/pricing/details/document-intelligence/",
       vision: "https://learn.microsoft.com/en-us/azure/ai-services/computer-vision/overview",
@@ -902,6 +952,17 @@
       serviceLinks: document.getElementById("serviceLinks"),
       modelFamily: document.getElementById("modelFamily"),
       modelRegion: document.getElementById("modelRegion"),
+      tokenPreset: document.getElementById("tokenPreset"),
+      tokenUnitLabel: document.getElementById("tokenUnitLabel"),
+      monthlyUnits: document.getElementById("monthlyUnits"),
+      inputWords: document.getElementById("inputWords"),
+      outputWords: document.getElementById("outputWords"),
+      contextPages: document.getElementById("contextPages"),
+      wordsPerPage: document.getElementById("wordsPerPage"),
+      iterationsPerCase: document.getElementById("iterationsPerCase"),
+      safetyMargin: document.getElementById("safetyMargin"),
+      applyTokenEstimate: document.getElementById("applyTokenEstimate"),
+      tokenBreakdown: document.getElementById("tokenBreakdown"),
       inputTokens: document.getElementById("inputTokens"),
       outputTokens: document.getElementById("outputTokens"),
       modelTotal: document.getElementById("modelTotal"),
@@ -913,6 +974,66 @@
     const decimalMoney = new Intl.NumberFormat("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const money = { format: value => `USD ${decimalMoney.format(Number(value || 0))}` };
     const integer = new Intl.NumberFormat("es-AR");
+
+    const TOKEN_PRESETS = {
+      chat: {
+        label: "Interacciones por mes",
+        monthlyUnits: 10000,
+        inputWords: 120,
+        outputWords: 220,
+        contextPages: 0,
+        wordsPerPage: 500,
+        iterations: 1,
+        margin: 20,
+        note: "Chat simple: una pregunta de usuario, instrucciones del sistema y una respuesta."
+      },
+      rag: {
+        label: "Preguntas con búsqueda por mes",
+        monthlyUnits: 10000,
+        inputWords: 180,
+        outputWords: 350,
+        contextPages: 3,
+        wordsPerPage: 500,
+        iterations: 1,
+        margin: 25,
+        note: "RAG: suma pregunta + instrucciones + fragmentos recuperados como contexto."
+      },
+      summary: {
+        label: "Documentos resumidos por mes",
+        monthlyUnits: 1000,
+        inputWords: 100,
+        outputWords: 450,
+        contextPages: 10,
+        wordsPerPage: 500,
+        iterations: 1,
+        margin: 20,
+        note: "Resumen: cada documento entra como contexto; la salida es el resumen esperado."
+      },
+      extract: {
+        label: "Registros/documentos procesados por mes",
+        monthlyUnits: 50000,
+        inputWords: 350,
+        outputWords: 80,
+        contextPages: 0,
+        wordsPerPage: 500,
+        iterations: 1,
+        margin: 20,
+        note: "Extracción/clasificación: entrada relativamente fija y salida corta estructurada."
+      },
+      agent: {
+        label: "Ejecuciones de agente por mes",
+        monthlyUnits: 5000,
+        inputWords: 220,
+        outputWords: 300,
+        contextPages: 2,
+        wordsPerPage: 500,
+        iterations: 3,
+        margin: 30,
+        note: "Agente: multiplica por iteraciones porque cada paso vuelve a enviar contexto, herramientas y respuesta parcial."
+      }
+    };
+
+    const TOKENS_PER_WORD = 1.33;
 
     function searchable(item) {
       return [
@@ -1401,6 +1522,74 @@
       els.modelLinks.innerHTML = links.map(([label, href]) => `<a class="chip" href="${href}" target="_blank" rel="noreferrer">${escapeHtml(label)}</a>`).join("");
     }
 
+    function estimateProcessTokens() {
+      const monthlyUnits = Number(els.monthlyUnits.value || 0);
+      const inputWords = Number(els.inputWords.value || 0);
+      const outputWords = Number(els.outputWords.value || 0);
+      const contextPages = Number(els.contextPages.value || 0);
+      const wordsPerPage = Number(els.wordsPerPage.value || 0);
+      const iterations = Number(els.iterationsPerCase.value || 1);
+      const margin = Number(els.safetyMargin.value || 0) / 100;
+      const contextWords = contextPages * wordsPerPage;
+      const inputTokensPerCase = Math.ceil((inputWords + contextWords) * TOKENS_PER_WORD * iterations);
+      const outputTokensPerCase = Math.ceil(outputWords * TOKENS_PER_WORD * iterations);
+      const inputTokens = Math.ceil(inputTokensPerCase * monthlyUnits * (1 + margin));
+      const outputTokens = Math.ceil(outputTokensPerCase * monthlyUnits * (1 + margin));
+      return {
+        monthlyUnits,
+        inputWords,
+        outputWords,
+        contextWords,
+        contextPages,
+        wordsPerPage,
+        iterations,
+        margin,
+        inputTokensPerCase,
+        outputTokensPerCase,
+        inputTokens,
+        outputTokens
+      };
+    }
+
+    function renderTokenEstimate() {
+      const preset = TOKEN_PRESETS[els.tokenPreset.value];
+      const estimate = estimateProcessTokens();
+      els.tokenBreakdown.innerHTML = `
+        <div class="answer-card">
+          <span class="muted small">Estimación base de tokens</span>
+          <strong>${integer.format(estimate.inputTokens + estimate.outputTokens)} tokens/mes</strong>
+          <small>${integer.format(estimate.inputTokens)} input + ${integer.format(estimate.outputTokens)} output.</small>
+          <small>${escapeHtml(preset.note)}</small>
+          <div class="chips"><a class="chip" href="${DOCS.chatCompletions}" target="_blank" rel="noreferrer">Chat completions: usage tokens</a><a class="chip" href="${DOCS.embeddings}" target="_blank" rel="noreferrer">Embeddings docs</a></div>
+        </div>
+        <div class="line"><span>Input por caso</span><strong>${integer.format(estimate.inputTokensPerCase)} tokens</strong><small>(${integer.format(estimate.inputWords)} palabras de entrada + ${integer.format(estimate.contextWords)} palabras de contexto) × ${estimate.iterations} iteración(es).</small></div>
+        <div class="line"><span>Output por caso</span><strong>${integer.format(estimate.outputTokensPerCase)} tokens</strong><small>${integer.format(estimate.outputWords)} palabras esperadas × ${estimate.iterations} iteración(es).</small></div>
+        <div class="line"><span>Margen aplicado</span><strong>${integer.format(estimate.margin * 100)}%</strong><small>Sirve para cubrir variación de prompts, formato JSON, tool calls y respuestas más largas.</small></div>
+        <div class="notice small">Regla base editable: 1 palabra ≈ 1,33 tokens. Para producción, calibrar con mediciones reales de la API usando <code>usage.prompt_tokens</code>, <code>usage.completion_tokens</code> y <code>usage.total_tokens</code>.</div>
+      `;
+    }
+
+    function applyTokenEstimateToModel() {
+      const estimate = estimateProcessTokens();
+      els.inputTokens.value = estimate.inputTokens;
+      els.outputTokens.value = estimate.outputTokens;
+      calculateModel();
+    }
+
+    function applyTokenPreset() {
+      const preset = TOKEN_PRESETS[els.tokenPreset.value];
+      els.tokenUnitLabel.textContent = preset.label;
+      els.monthlyUnits.value = preset.monthlyUnits;
+      els.inputWords.value = preset.inputWords;
+      els.outputWords.value = preset.outputWords;
+      els.contextPages.value = preset.contextPages;
+      els.wordsPerPage.value = preset.wordsPerPage;
+      els.iterationsPerCase.value = preset.iterations;
+      els.safetyMargin.value = preset.margin;
+      renderTokenEstimate();
+      applyTokenEstimateToModel();
+    }
+
     function setMode(mode) {
       state.mode = mode;
       els.servicePanel.classList.toggle("hidden", mode !== "service");
@@ -1432,6 +1621,7 @@
           ].join("\n")
         : [
             `Modelo: ${els.modelFamily.value}`,
+            `Caso de uso: ${els.tokenPreset.options[els.tokenPreset.selectedIndex].text}`,
             `Input tokens/mes: ${els.inputTokens.value}`,
             `Output tokens/mes: ${els.outputTokens.value}`,
             `Costo estimado: ${els.modelTotal.textContent}`,
@@ -1455,6 +1645,7 @@
       }
       selectService("document-layout");
       renderServices();
+      applyTokenPreset();
       calculateModel();
     }
 
@@ -1468,6 +1659,11 @@
     els.modelRegion.addEventListener("change", calculateModel);
     els.inputTokens.addEventListener("input", calculateModel);
     els.outputTokens.addEventListener("input", calculateModel);
+    els.tokenPreset.addEventListener("change", applyTokenPreset);
+    [els.monthlyUnits, els.inputWords, els.outputWords, els.contextPages, els.wordsPerPage, els.iterationsPerCase, els.safetyMargin].forEach(input => {
+      input.addEventListener("input", renderTokenEstimate);
+    });
+    els.applyTokenEstimate.addEventListener("click", applyTokenEstimateToModel);
     els.copyEstimate.addEventListener("click", copyEstimate);
 
     init().catch(error => {

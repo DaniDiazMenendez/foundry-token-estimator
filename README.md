@@ -8,6 +8,8 @@ La pestaña **Models** permite estimar a nivel modelo/familia con input tokens y
 
 La UI está pensada para conversación con cliente: cada tarjeta pregunta por una cantidad mensual entendible (imágenes, páginas, documentos, caracteres, horas, iteraciones o tokens según aplique), muestra si el servicio consume tokens o no, calcula precio aproximado y deja links de documentación junto al resultado. Las unidades abreviadas de billing se muestran como valores completos.
 
+Para modelos, la calculadora incluye una capa previa de estimación de tokens por proceso/caso de uso: chat simple, RAG sobre documentos, resumen, extracción/clasificación y agentes con iteraciones. Esa capa convierte supuestos editables —cantidad mensual, palabras de entrada, páginas de contexto, palabras por página, salida esperada, iteraciones y margen— en input/output tokens mensuales. Luego esos tokens alimentan el cálculo de USD.
+
 ## Fuentes oficiales
 
 - Azure Retail Prices API: https://learn.microsoft.com/en-us/rest/api/cost-management/retail-prices/azure-retail-prices
