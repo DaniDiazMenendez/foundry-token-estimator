@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Calculadora de estimaciones de tokens - Microsoft Foundry</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23b11f4b'/%3E%3Cpath d='M8 10h16v3H8zm0 5h10v3H8zm0 5h16v3H8z' fill='white'/%3E%3C/svg%3E">
+  <title>Foundry AI estimator</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23b11f4b'/%3E%3Cpath d='M9 10h14v3H9zm0 5h9v3H9zm0 5h14v3H9z' fill='white'/%3E%3C/svg%3E">
   <script>
     (() => {
       const param = new URLSearchParams(window.location.search).get("scoutTheme");
@@ -67,141 +67,257 @@
       --cp-highlight: rgba(253, 142, 161, 0.12);
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
       background: var(--cp-bg);
       color: var(--cp-text);
       font-family: "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 14px;
     }
 
-    a {
-      color: var(--cp-link);
+    a { color: var(--cp-link); }
+    button, input, select { font: inherit; }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: grid;
+      grid-template-columns: 260px minmax(260px, 520px) 1fr auto;
+      gap: 16px;
+      align-items: center;
+      padding: 10px 24px;
+      background: var(--cp-bg-elevated);
+      border-bottom: 1px solid var(--cp-border);
     }
 
-    button,
-    input,
-    select {
-      font: inherit;
+    .brand { font-weight: 700; }
+
+    .search {
+      border: 1px solid var(--cp-border-strong);
+      border-radius: 999px;
+      padding: 8px 14px;
+      background: var(--cp-surface);
+      color: var(--cp-text);
+      width: 100%;
+    }
+
+    .nav {
+      display: flex;
+      gap: 14px;
+      justify-content: end;
+      color: var(--cp-text-muted);
+    }
+
+    .nav button {
+      border: 0;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+      padding: 6px 0;
+    }
+
+    .nav button.active {
+      color: var(--cp-text);
+      font-weight: 700;
+      border-bottom: 2px solid var(--cp-accent);
     }
 
     .shell {
-      width: min(1440px, 100%);
+      width: min(1240px, calc(100% - 32px));
       margin: 0 auto;
-      padding: 32px;
+      padding: 28px 0;
     }
 
-    .hero,
-    .card {
-      background: var(--cp-surface);
-      border: 1px solid var(--cp-border);
-      border-radius: 16px;
-      box-shadow: var(--cp-shadow);
+    .intro {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: end;
+      margin-bottom: 18px;
     }
 
-    .hero {
-      padding: 28px;
-      margin-bottom: 20px;
-    }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { font-size: 24px; margin-bottom: 6px; }
+    h2 { font-size: 16px; margin-bottom: 14px; }
+    h3 { font-size: 14px; margin-bottom: 6px; }
+    p { margin-bottom: 0; }
 
-    h1,
-    h2,
-    h3 {
-      margin: 0;
-      line-height: 1.15;
-    }
+    .muted { color: var(--cp-text-muted); }
+    .small { font-size: 12px; }
 
-    h1 {
-      font-size: clamp(1.8rem, 4vw, 3.2rem);
-      max-width: 980px;
-    }
-
-    h2 {
-      font-size: 1.25rem;
-    }
-
-    h3 {
-      font-size: 1rem;
-    }
-
-    .muted {
-      color: var(--cp-text-muted);
-    }
-
-    .hero p {
-      max-width: 980px;
-      color: var(--cp-text-muted);
-      font-size: 1.02rem;
-      margin: 16px 0 0;
-    }
-
-    .source-strip,
-    .toolbar,
-    .summary-grid,
-    .row-grid,
-    .source-grid {
+    .layout {
       display: grid;
+      grid-template-columns: minmax(0, 1fr) 380px;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .section { margin-bottom: 28px; }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 12px;
     }
 
-    .source-strip {
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      margin-top: 20px;
+    .card {
+      background: var(--cp-surface);
+      border: 1px solid var(--cp-border);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 0 2px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.14);
     }
 
-    .source-pill {
+    .tile {
+      display: grid;
+      grid-template-columns: 40px 1fr;
+      gap: 12px;
+      min-height: 92px;
+      text-align: left;
+      cursor: pointer;
+      transition: border-color .15s ease, transform .15s ease;
+    }
+
+    .tile:hover,
+    .tile.active {
+      border-color: var(--cp-accent);
+      transform: translateY(-1px);
+    }
+
+    .icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      background: var(--cp-accent-soft);
+      color: var(--cp-accent);
+      font-weight: 800;
+    }
+
+    .tile p {
+      color: var(--cp-text-muted);
+      line-height: 1.35;
+      font-size: 12px;
+    }
+
+    .panel {
+      position: sticky;
+      top: 72px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 4px;
       background: var(--cp-surface-soft);
       border: 1px solid var(--cp-border);
-      border-radius: 0.625rem;
-      padding: 12px;
+      border-radius: 999px;
     }
 
-    .toolbar {
-      grid-template-columns: 1.4fr repeat(3, minmax(160px, 0.6fr));
-      align-items: end;
-      margin: 20px 0;
+    .tabs button {
+      border: 0;
+      border-radius: 999px;
+      padding: 8px;
+      cursor: pointer;
+      background: transparent;
+      color: var(--cp-text-muted);
+    }
+
+    .tabs button.active {
+      background: var(--cp-surface);
+      color: var(--cp-text);
+      font-weight: 700;
+      box-shadow: 0 0 2px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.14);
     }
 
     label {
       display: grid;
       gap: 6px;
       color: var(--cp-text-muted);
-      font-size: 0.88rem;
+      font-size: 12px;
       font-weight: 600;
     }
 
-    input,
-    select {
+    input, select {
       width: 100%;
-      padding: 10px 12px;
-      color: var(--cp-text);
-      background: var(--cp-surface);
       border: 1px solid var(--cp-border-strong);
-      border-radius: 0.625rem;
-      outline: none;
+      border-radius: 8px;
+      padding: 9px 10px;
+      background: var(--cp-surface);
+      color: var(--cp-text);
     }
 
-    input:focus,
-    select:focus {
+    input:focus, select:focus, .search:focus {
+      outline: 0;
       border-color: var(--cp-accent);
       box-shadow: 0 0 0 3px var(--cp-accent-soft);
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .two {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .total {
+      background: var(--cp-accent-soft);
+      border: 1px solid var(--cp-border);
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+    .total strong {
+      display: block;
+      font-size: 28px;
+      margin-top: 4px;
+    }
+
+    .line {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--cp-border);
+    }
+
+    .line:last-child { border-bottom: 0; }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .chip {
+      border: 1px solid var(--cp-border);
+      border-radius: 999px;
+      padding: 6px 9px;
+      background: var(--cp-surface-soft);
+      text-decoration: none;
+      font-size: 12px;
     }
 
     .button {
       border: 1px solid var(--cp-accent);
       background: var(--cp-accent);
       color: var(--cp-accent-fg);
-      border-radius: 0.625rem;
-      padding: 10px 14px;
-      cursor: pointer;
+      border-radius: 8px;
+      padding: 9px 12px;
       font-weight: 700;
-    }
-
-    .button:hover {
-      background: var(--cp-accent-hover);
+      cursor: pointer;
     }
 
     .button.secondary {
@@ -209,321 +325,130 @@
       color: var(--cp-accent);
     }
 
-    .layout {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 360px;
-      gap: 20px;
-    }
-
-    .card {
-      padding: 18px;
-    }
-
-    .summary-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-
-    .metric {
-      background: var(--cp-surface-soft);
-      border: 1px solid var(--cp-border);
-      border-radius: 0.625rem;
-      padding: 14px;
-    }
-
-    .metric strong {
-      display: block;
-      font-size: 1.35rem;
-      margin-top: 4px;
-    }
-
-    .process-list {
-      display: grid;
-      gap: 12px;
-      margin-top: 14px;
-    }
-
-    .quick-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 14px;
-      margin-top: 14px;
-    }
-
-    .service-card {
-      background: var(--cp-bg-elevated);
-      border: 1px solid var(--cp-border);
-      border-radius: 16px;
-      padding: 14px;
-      display: grid;
-      gap: 12px;
-    }
-
-    .service-card-header {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      align-items: start;
-    }
-
-    .service-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-
-    .step {
-      background: var(--cp-bg-elevated);
-      border: 1px solid var(--cp-border);
-      border-radius: 16px;
-      padding: 14px;
-    }
-
-    .row-grid {
-      grid-template-columns: 1.1fr 1.6fr 0.75fr 0.75fr 0.75fr auto;
-      align-items: end;
-    }
-
-    .cost {
-      font-size: 1.1rem;
-      font-weight: 800;
-      text-align: right;
-    }
-
-    .links {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 12px;
-    }
-
-    .link-chip {
-      border: 1px solid var(--cp-border);
-      border-radius: 999px;
-      padding: 6px 10px;
-      background: var(--cp-surface);
-      font-size: 0.85rem;
-      text-decoration: none;
-    }
-
-    .table-wrap {
-      overflow: auto;
-      border: 1px solid var(--cp-border);
-      border-radius: 0.625rem;
-      margin-top: 12px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 780px;
-    }
-
-    th,
-    td {
-      padding: 10px;
-      border-bottom: 1px solid var(--cp-border);
-      text-align: left;
-      vertical-align: top;
-    }
-
-    th {
-      color: var(--cp-text-muted);
-      background: var(--cp-surface-soft);
-      font-size: 0.84rem;
-    }
-
-    code {
-      font-family: Consolas, "Courier New", Courier, monospace;
-      color: var(--cp-text);
-    }
-
     .notice {
       border: 1px solid var(--cp-warning);
       background: var(--cp-highlight);
-      border-radius: 0.625rem;
+      border-radius: 10px;
       padding: 12px;
       color: var(--cp-text);
-      margin-top: 12px;
     }
 
-    .danger {
-      color: var(--cp-danger);
-    }
+    .hidden { display: none !important; }
 
-    details.card > summary {
-      cursor: pointer;
-      font-size: 1.25rem;
-      font-weight: 700;
-      list-style-position: inside;
-    }
-
-    .small {
-      font-size: 0.86rem;
-    }
-
-    @media (max-width: 1100px) {
-      .layout,
-      .toolbar,
-      .row-grid,
-      .service-row {
-        grid-template-columns: 1fr;
-      }
-
-      .cost {
-        text-align: left;
-      }
+    @media (max-width: 1050px) {
+      .topbar { grid-template-columns: 1fr; }
+      .nav { justify-content: start; }
+      .layout { grid-template-columns: 1fr; }
+      .panel { position: static; }
+      .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
 
     @media (max-width: 700px) {
-      .shell {
-        padding: 16px;
-      }
-
-      .summary-grid {
-        grid-template-columns: 1fr;
-      }
+      .cards, .two { grid-template-columns: 1fr; }
+      .intro { display: block; }
     }
   </style>
 </head>
 <body>
+  <header class="topbar">
+    <div class="brand">foundry-estimator</div>
+    <input class="search" id="search" placeholder="Search services or models">
+    <nav class="nav">
+      <button class="active" data-view="services">Discover</button>
+      <button data-view="models">Models</button>
+      <button data-view="docs">Docs</button>
+    </nav>
+    <span class="muted small" id="datasetStatus">Loading prices...</span>
+  </header>
+
   <main class="shell">
-    <section class="hero">
-      <h1>Calculadora de estimaciones de tokens y costos para Microsoft Foundry</h1>
-      <p>
-        Arme un proceso por pasos, seleccione medidores oficiales de Foundry Models y estime costo mensual en USD. Cada línea conserva enlace al medidor exacto de Azure Retail Prices, al pricing público y a la documentación de Foundry que respalda disponibilidad/catálogo.
-      </p>
-      <div class="source-strip" id="sourceStrip"></div>
-      <div class="notice small">
-        Esta herramienta usa precios retail públicos sin descuentos, compromisos, reservas, impuestos ni acuerdos privados. Si el cliente tiene contrato o beneficio, aplíquelo fuera de esta calculadora. Honestidad al 90%, como corresponde.
+    <section class="intro">
+      <div>
+        <h1>Estimador de Azure AI Foundry</h1>
+        <p class="muted">Elegí un servicio como en Foundry, cargá volumen mensual y obtené costo con fuente oficial.</p>
       </div>
-    </section>
-
-    <section class="toolbar card">
-      <label>
-        Buscar modelo o medidor Foundry
-        <input id="searchInput" placeholder="Ej: GPT 5 Mini input, Claude, Mistral, embedding">
-      </label>
-      <label>
-        Producto
-        <select id="productFilter"></select>
-      </label>
-      <label>
-        Región Azure
-        <select id="regionFilter"></select>
-      </label>
-      <button class="button" id="addStep">Agregar paso</button>
-    </section>
-
-    <section class="card">
-      <h2>Estimaciones rápidas por servicio de IA</h2>
-      <p class="muted small">
-        Use esto para conversaciones con clientes: documentos por mes, imágenes por mes, caracteres traducidos, texto moderado o búsquedas. Cada tarjeta usa medidores oficiales de Azure Retail Prices y enlaza documentación del servicio.
-      </p>
-      <div class="quick-grid" id="quickServices"></div>
+      <button class="button secondary" id="copyEstimate">Copiar estimación</button>
     </section>
 
     <section class="layout">
-      <div>
-        <article class="card">
-          <h2>Modelos Foundry por tokens</h2>
-          <p class="muted small">
-            Para procesos con modelos, agregue una línea por componente: input, output, cached input, embeddings, imagen/audio tokenizado o batch. Las unidades se calculan según <code>unitOfMeasure</code> del medidor oficial.
-          </p>
-          <div class="process-list" id="steps"></div>
-        </article>
+      <div id="content"></div>
 
-        <details class="card" style="margin-top: 20px;">
-          <summary>Medidores oficiales avanzados</summary>
-          <p class="muted small" id="meterCount"></p>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Producto</th>
-                  <th>SKU / medidor</th>
-                  <th>Región</th>
-                  <th>Unidad</th>
-                  <th>Precio retail</th>
-                  <th>Fuente</th>
-                </tr>
-              </thead>
-              <tbody id="meterTable"></tbody>
-            </table>
-          </div>
-        </details>
-      </div>
-
-      <aside class="card">
-        <h2>Resumen</h2>
-        <div class="summary-grid" style="margin-top: 12px;">
-          <div class="metric">
-            <span class="muted small">Costo mensual total</span>
-            <strong id="monthlyTotal">USD 0.00</strong>
-          </div>
-          <div class="metric">
-            <span class="muted small">Costo por ejecución</span>
-            <strong id="runTotal">USD 0.00</strong>
-          </div>
-          <div class="metric">
-            <span class="muted small">Tokens/unidades por ejecución</span>
-            <strong id="unitTotal">0</strong>
-          </div>
-          <div class="metric">
-            <span class="muted small">Ítems estimados</span>
-            <strong id="stepTotal">0</strong>
-          </div>
+      <aside class="panel">
+        <div class="tabs">
+          <button class="active" data-mode="service">Servicio</button>
+          <button data-mode="model">Modelo</button>
         </div>
+
+        <section class="card" id="servicePanel">
+          <h2 id="serviceTitle">Seleccioná un servicio</h2>
+          <p class="muted small" id="serviceDescription">Las tarjetas replican escenarios del Discover de Foundry: documentos, voz, traducción, lenguaje, call center y avatares.</p>
+          <div class="form-grid" style="margin-top: 14px;">
+            <label>
+              Medidor oficial
+              <select id="serviceMeter"></select>
+            </label>
+            <label>
+              Volumen mensual
+              <input id="serviceQuantity" type="number" min="0" step="1" value="10000">
+            </label>
+            <label>
+              Unidad estimada
+              <input id="serviceUnit" readonly>
+            </label>
+          </div>
+          <div class="total" style="margin-top: 14px;">
+            <span class="muted small">Costo mensual estimado</span>
+            <strong id="serviceTotal">$0.00</strong>
+          </div>
+          <div id="serviceBreakdown"></div>
+          <div class="chips" id="serviceLinks"></div>
+        </section>
+
+        <section class="card hidden" id="modelPanel">
+          <h2>Estimación por modelo</h2>
+          <p class="muted small">Calculá input/output tokens por mes usando medidores oficiales de Foundry Models.</p>
+          <div class="form-grid" style="margin-top: 14px;">
+            <label>
+              Modelo o familia
+              <select id="modelFamily"></select>
+            </label>
+            <div class="two">
+              <label>
+                Input tokens/mes
+                <input id="inputTokens" type="number" min="0" step="1" value="1000000">
+              </label>
+              <label>
+                Output tokens/mes
+                <input id="outputTokens" type="number" min="0" step="1" value="250000">
+              </label>
+            </div>
+            <label>
+              Región
+              <select id="modelRegion"></select>
+            </label>
+          </div>
+          <div class="total" style="margin-top: 14px;">
+            <span class="muted small">Costo mensual estimado</span>
+            <strong id="modelTotal">$0.00</strong>
+          </div>
+          <div id="modelBreakdown"></div>
+          <div class="chips" id="modelLinks"></div>
+        </section>
+
         <div class="notice small">
-          Para estimaciones de arquitectura: modele cada llamada del flujo. Ejemplo: clasificación, extracción, RAG, respuesta final y embeddings separados. Sí, parece más trabajo. También parece más correcto.
-        </div>
-        <div style="margin-top: 14px; display: grid; gap: 10px;">
-          <button class="button secondary" id="copySummary">Copiar resumen</button>
-          <button class="button secondary" id="downloadCsv">Descargar CSV</button>
+          Precios retail públicos en USD desde Azure Retail Prices API. No incluye descuentos, impuestos, contratos privados ni reservas. Triste, pero transparente.
         </div>
       </aside>
     </section>
   </main>
 
-  <template id="stepTemplate">
-    <div class="step">
-      <div class="row-grid">
-        <label>
-          Paso del proceso
-          <input class="step-name" placeholder="Ej: Respuesta final">
-        </label>
-        <label>
-          Medidor oficial
-          <select class="step-meter"></select>
-        </label>
-        <label>
-          Cantidad por ejecución
-          <input class="step-quantity" type="number" min="0" step="1" value="1000000">
-        </label>
-        <label>
-          Ejecuciones/mes
-          <input class="step-runs" type="number" min="0" step="1" value="1">
-        </label>
-        <label>
-          Multiplicador
-          <input class="step-factor" type="number" min="0" step="0.01" value="1">
-        </label>
-        <div>
-          <div class="cost">USD 0.00</div>
-          <button class="button secondary remove-step" style="margin-top: 8px;">Quitar</button>
-        </div>
-      </div>
-      <div class="links"></div>
-    </div>
-  </template>
-
   <script>
-    const DATA_URL = "data/prices.json";
     const DOCS = {
-      retailApi: "https://learn.microsoft.com/en-us/rest/api/cost-management/retail-prices/azure-retail-prices",
-      azureOpenAiPricing: "https://azure.microsoft.com/en-us/pricing/details/azure-openai/",
+      retail: "https://learn.microsoft.com/en-us/rest/api/cost-management/retail-prices/azure-retail-prices",
       foundry: "https://learn.microsoft.com/en-us/azure/foundry/what-is-foundry",
       soldByAzure: "https://learn.microsoft.com/en-us/azure/foundry/foundry-models/concepts/models-sold-directly-by-azure",
       partners: "https://learn.microsoft.com/en-us/azure/foundry/foundry-models/concepts/models-from-partners",
+      openAiPricing: "https://azure.microsoft.com/en-us/pricing/details/azure-openai/",
       documentIntelligence: "https://learn.microsoft.com/en-us/azure/ai-services/document-intelligence/overview?view=doc-intel-4.0.0",
       documentIntelligencePricing: "https://azure.microsoft.com/en-us/pricing/details/document-intelligence/",
       vision: "https://learn.microsoft.com/en-us/azure/ai-services/computer-vision/overview",
@@ -531,150 +456,281 @@
       contentSafety: "https://learn.microsoft.com/en-us/azure/ai-services/content-safety/overview",
       contentSafetyPricing: "https://azure.microsoft.com/en-us/pricing/details/content-safety/",
       speechPricing: "https://azure.microsoft.com/en-us/pricing/details/cognitive-services/speech-services/",
-      languagePricing: "https://azure.microsoft.com/en-us/pricing/details/cognitive-services/language-service/",
       translatorPricing: "https://azure.microsoft.com/en-us/pricing/details/cognitive-services/translator/",
+      languagePricing: "https://azure.microsoft.com/en-us/pricing/details/cognitive-services/language-service/",
       searchPricing: "https://azure.microsoft.com/en-us/pricing/details/search/"
     };
 
-    const SERVICE_PRESETS = [
+    const SERVICE_SECTIONS = [
       {
-        id: "document-intelligence",
-        title: "Document Intelligence",
-        description: "Documentos, facturas, recibos o formularios. Normalmente se estima por páginas/transacciones según el medidor elegido.",
-        quantityLabel: "Páginas o transacciones/mes",
-        defaultQuantity: 10000,
-        include: ["document intelligence"],
-        prefer: ["standard", "pre-built", "layout", "read"],
-        docs: [["Docs servicio", DOCS.documentIntelligence], ["Pricing", DOCS.documentIntelligencePricing]]
+        title: "Try in playgrounds",
+        items: [
+          {
+            id: "document-layout",
+            icon: "□",
+            title: "Document layout analyzer",
+            description: "Parse documents into text, tables, layout and spans.",
+            quantityLabel: "Páginas de documentos por mes",
+            defaultQuantity: 10000,
+            include: ["document intelligence"],
+            prefer: ["layout", "read", "pre-built", "standard"],
+            docs: [["Document Intelligence docs", DOCS.documentIntelligence], ["Pricing", DOCS.documentIntelligencePricing]]
+          },
+          {
+            id: "speech-to-text",
+            icon: "≋",
+            title: "Speech to text",
+            description: "Transcribe spoken audio in real time or from files.",
+            quantityLabel: "Horas o transacciones de audio por mes",
+            defaultQuantity: 100,
+            include: ["speech"],
+            prefer: ["speech to text", "audio input", "standard"],
+            docs: [["Speech pricing", DOCS.speechPricing]]
+          },
+          {
+            id: "invoice-analyzer",
+            icon: "□",
+            title: "Invoice analyzer",
+            description: "Extract line items, totals and vendor details.",
+            quantityLabel: "Páginas de facturas por mes",
+            defaultQuantity: 5000,
+            include: ["document intelligence"],
+            prefer: ["pre-built", "invoice", "standard"],
+            docs: [["Document Intelligence docs", DOCS.documentIntelligence], ["Pricing", DOCS.documentIntelligencePricing]]
+          },
+          {
+            id: "text-to-speech",
+            icon: "≋",
+            title: "Text to speech",
+            description: "Synthesize speech using voices from multiple providers.",
+            quantityLabel: "Caracteres por mes",
+            defaultQuantity: 1000000,
+            include: ["speech"],
+            prefer: ["text to speech characters", "neural", "characters"],
+            docs: [["Speech pricing", DOCS.speechPricing]]
+          },
+          {
+            id: "voice-live",
+            icon: "≋",
+            title: "Voice live",
+            description: "Build voice-enabled agents with speech and models.",
+            quantityLabel: "Tokens o unidades de audio por mes",
+            defaultQuantity: 1000000,
+            include: ["speech"],
+            prefer: ["voice live", "tokens", "audio input"],
+            docs: [["Speech pricing", DOCS.speechPricing]]
+          },
+          {
+            id: "text-translation",
+            icon: "文",
+            title: "Text translation",
+            description: "Translate text across languages.",
+            quantityLabel: "Caracteres traducidos por mes",
+            defaultQuantity: 1000000,
+            include: ["translator"],
+            prefer: ["standard characters", "document characters", "characters"],
+            docs: [["Translator pricing", DOCS.translatorPricing]]
+          },
+          {
+            id: "language-detection",
+            icon: "A",
+            title: "Language detection",
+            description: "Identify input language for text.",
+            quantityLabel: "Registros de texto por mes",
+            defaultQuantity: 100000,
+            include: ["azure language", "language understanding"],
+            prefer: ["text records", "standard", "s1"],
+            docs: [["Language pricing", DOCS.languagePricing]]
+          },
+          {
+            id: "call-center",
+            icon: "□",
+            title: "Call center analyzer",
+            description: "Extract sentiment, topics and conversation summaries.",
+            quantityLabel: "Registros, horas o tokens por mes",
+            defaultQuantity: 100000,
+            include: ["language", "speech", "content safety"],
+            prefer: ["text records", "speech to text", "standard"],
+            docs: [["Language pricing", DOCS.languagePricing], ["Speech pricing", DOCS.speechPricing]]
+          }
+        ]
       },
       {
-        id: "vision",
-        title: "Azure Vision",
-        description: "Imágenes por mes para análisis visual, OCR heredado o visión. El medidor define si cobra por 1K transacciones, día u otra unidad.",
-        quantityLabel: "Imágenes o transacciones/mes",
-        defaultQuantity: 50000,
-        include: ["azure vision", "azure custom vision"],
-        prefer: ["transactions", "standard", "s0"],
-        docs: [["Docs servicio", DOCS.vision], ["Pricing", DOCS.visionPricing]]
+        title: "Customize",
+        items: [
+          {
+            id: "custom-stt",
+            icon: "≋",
+            title: "Custom speech to text",
+            description: "Fine-tune speech recognition with custom audio.",
+            quantityLabel: "Horas o transacciones por mes",
+            defaultQuantity: 100,
+            include: ["speech"],
+            prefer: ["custom speech to text", "speech to text"],
+            docs: [["Speech pricing", DOCS.speechPricing]]
+          },
+          {
+            id: "professional-voice",
+            icon: "≋",
+            title: "Professional voice",
+            description: "Create custom brand-specific voices.",
+            quantityLabel: "Caracteres o unidades por mes",
+            defaultQuantity: 1000000,
+            include: ["speech"],
+            prefer: ["custom neural voice", "text to speech", "characters"],
+            docs: [["Speech pricing", DOCS.speechPricing]]
+          },
+          {
+            id: "personal-voice",
+            icon: "≋",
+            title: "Personal voice",
+            description: "Generate a voice replication for controlled scenarios.",
+            quantityLabel: "Caracteres o unidades por mes",
+            defaultQuantity: 1000000,
+            include: ["speech"],
+            prefer: ["personal voice", "text to speech", "characters"],
+            docs: [["Speech pricing", DOCS.speechPricing]]
+          },
+          {
+            id: "custom-video-avatar",
+            icon: "≋",
+            title: "Custom video avatar",
+            description: "Create a synthetic talking avatar.",
+            quantityLabel: "Minutos, caracteres o unidades por mes",
+            defaultQuantity: 100,
+            include: ["speech"],
+            prefer: ["avatar", "video", "characters"],
+            docs: [["Speech pricing", DOCS.speechPricing]]
+          },
+          {
+            id: "custom-photo-avatar",
+            icon: "≋",
+            title: "Custom photo avatar",
+            description: "Create a talking head avatar from a photo.",
+            quantityLabel: "Minutos, caracteres o unidades por mes",
+            defaultQuantity: 100,
+            include: ["speech"],
+            prefer: ["avatar", "photo", "characters"],
+            docs: [["Speech pricing", DOCS.speechPricing]]
+          }
+        ]
       },
       {
-        id: "content-safety",
-        title: "Content Safety",
-        description: "Moderación de texto, imágenes, prompt shields o groundedness. Útil para flujos GenAI con controles de seguridad.",
-        quantityLabel: "Registros o imágenes/mes",
-        defaultQuantity: 100000,
-        include: ["content safety"],
-        prefer: ["standard text records", "standard images", "transactions"],
-        docs: [["Docs servicio", DOCS.contentSafety], ["Pricing", DOCS.contentSafetyPricing]]
+        title: "Tools",
+        items: [
+          {
+            id: "speech-mcp",
+            icon: "✦",
+            title: "Azure Speech MCP Server",
+            description: "Estimate Speech capabilities exposed through tools.",
+            quantityLabel: "Horas, caracteres o tokens por mes",
+            defaultQuantity: 1000000,
+            include: ["speech"],
+            prefer: ["voice live", "speech to text", "text to speech"],
+            docs: [["Speech pricing", DOCS.speechPricing]]
+          },
+          {
+            id: "language-tools",
+            icon: "✦",
+            title: "Azure Language in Foundry Tools",
+            description: "Estimate language services for agents and tools.",
+            quantityLabel: "Registros de texto por mes",
+            defaultQuantity: 100000,
+            include: ["azure language"],
+            prefer: ["text records", "standard", "qa"],
+            docs: [["Language pricing", DOCS.languagePricing]]
+          }
+        ]
       },
       {
-        id: "translator",
-        title: "Translator",
-        description: "Traducción por caracteres. Use caracteres/mes, no documentos, salvo que convierta primero el volumen a caracteres.",
-        quantityLabel: "Caracteres/mes",
-        defaultQuantity: 1000000,
-        include: ["translator"],
-        prefer: ["characters", "standard"],
-        docs: [["Pricing", DOCS.translatorPricing]]
-      },
-      {
-        id: "speech",
-        title: "Speech",
-        description: "Texto a voz, voz a texto, audio o voice live. Elija el medidor que coincida con caracteres, horas, tokens o transacciones.",
-        quantityLabel: "Caracteres, horas o tokens/mes",
-        defaultQuantity: 1000000,
-        include: ["speech"],
-        prefer: ["text to speech characters", "speech to text", "audio input", "tokens"],
-        docs: [["Pricing", DOCS.speechPricing]]
-      },
-      {
-        id: "language",
-        title: "Language",
-        description: "Clasificación, PII, extracción, Q&A y text analytics. Normalmente se estima por 1K registros de texto o páginas.",
-        quantityLabel: "Registros, páginas o transacciones/mes",
-        defaultQuantity: 100000,
-        include: ["azure language", "language understanding"],
-        prefer: ["standard", "text records", "pages"],
-        docs: [["Pricing", DOCS.languagePricing]]
-      },
-      {
-        id: "ai-search",
-        title: "Azure AI Search",
-        description: "Búsqueda, agentic retrieval, skills o capacidad por hora. Para unidades por hora use horas/mes como cantidad.",
-        quantityLabel: "Tokens, transacciones u horas/mes",
-        defaultQuantity: 730,
-        include: ["azure ai search"],
-        prefer: ["agentic retrieval", "unit", "text records"],
-        docs: [["Pricing", DOCS.searchPricing]]
+        title: "Solution templates",
+        items: [
+          {
+            id: "multimodal-content",
+            icon: "◇",
+            title: "Multi-modal content processing",
+            description: "Claims, invoices, contracts and other documents.",
+            quantityLabel: "Documentos o páginas por mes",
+            defaultQuantity: 10000,
+            include: ["document intelligence", "vision", "content safety"],
+            prefer: ["pre-built", "layout", "standard"],
+            docs: [["Document Intelligence docs", DOCS.documentIntelligence], ["Vision docs", DOCS.vision]]
+          },
+          {
+            id: "call-center-agent",
+            icon: "◇",
+            title: "Call center voice agent",
+            description: "Speech-to-speech voice agents for self-service.",
+            quantityLabel: "Tokens, horas o caracteres por mes",
+            defaultQuantity: 1000000,
+            include: ["speech", "foundry models"],
+            prefer: ["voice live", "tokens", "speech to text"],
+            docs: [["Speech pricing", DOCS.speechPricing], ["Foundry models", DOCS.soldByAzure]]
+          },
+          {
+            id: "conversation-insights",
+            icon: "◇",
+            title: "Unlock insights from conversational data",
+            description: "Extract insights from audio and text-based data.",
+            quantityLabel: "Registros, horas o tokens por mes",
+            defaultQuantity: 100000,
+            include: ["language", "speech"],
+            prefer: ["text records", "speech to text"],
+            docs: [["Language pricing", DOCS.languagePricing], ["Speech pricing", DOCS.speechPricing]]
+          },
+          {
+            id: "conversational-agent",
+            icon: "◇",
+            title: "Build your conversational agent",
+            description: "Estimate model tokens and supporting tools.",
+            quantityLabel: "Tokens o tool calls por mes",
+            defaultQuantity: 1000000,
+            include: ["foundry models", "content safety", "azure ai search"],
+            prefer: ["tokens", "agentic retrieval", "standard text"],
+            docs: [["Foundry models", DOCS.soldByAzure], ["Azure OpenAI pricing", DOCS.openAiPricing]]
+          }
+        ]
       }
     ];
 
     const state = {
       prices: [],
       servicePrices: [],
-      filtered: [],
-      metadata: null
+      selectedService: null,
+      mode: "service"
     };
 
     const els = {
-      sourceStrip: document.getElementById("sourceStrip"),
-      searchInput: document.getElementById("searchInput"),
-      productFilter: document.getElementById("productFilter"),
-      regionFilter: document.getElementById("regionFilter"),
-      addStep: document.getElementById("addStep"),
-      quickServices: document.getElementById("quickServices"),
-      steps: document.getElementById("steps"),
-      meterCount: document.getElementById("meterCount"),
-      meterTable: document.getElementById("meterTable"),
-      monthlyTotal: document.getElementById("monthlyTotal"),
-      runTotal: document.getElementById("runTotal"),
-      unitTotal: document.getElementById("unitTotal"),
-      stepTotal: document.getElementById("stepTotal"),
-      copySummary: document.getElementById("copySummary"),
-      downloadCsv: document.getElementById("downloadCsv"),
-      template: document.getElementById("stepTemplate")
+      search: document.getElementById("search"),
+      content: document.getElementById("content"),
+      datasetStatus: document.getElementById("datasetStatus"),
+      servicePanel: document.getElementById("servicePanel"),
+      modelPanel: document.getElementById("modelPanel"),
+      serviceTitle: document.getElementById("serviceTitle"),
+      serviceDescription: document.getElementById("serviceDescription"),
+      serviceMeter: document.getElementById("serviceMeter"),
+      serviceQuantity: document.getElementById("serviceQuantity"),
+      serviceUnit: document.getElementById("serviceUnit"),
+      serviceTotal: document.getElementById("serviceTotal"),
+      serviceBreakdown: document.getElementById("serviceBreakdown"),
+      serviceLinks: document.getElementById("serviceLinks"),
+      modelFamily: document.getElementById("modelFamily"),
+      modelRegion: document.getElementById("modelRegion"),
+      inputTokens: document.getElementById("inputTokens"),
+      outputTokens: document.getElementById("outputTokens"),
+      modelTotal: document.getElementById("modelTotal"),
+      modelBreakdown: document.getElementById("modelBreakdown"),
+      modelLinks: document.getElementById("modelLinks"),
+      copyEstimate: document.getElementById("copyEstimate")
     };
 
     const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 4 });
     const integer = new Intl.NumberFormat("en-US");
 
-    function meterDocUrl(meterId) {
-      const filter = encodeURIComponent(`meterId eq '${meterId}'`);
-      return `https://prices.azure.com/api/retail/prices?api-version=2023-01-01-preview&$filter=${filter}`;
-    }
-
-    function docsFor(item) {
-      const docs = [
-        ["Retail Prices API", meterDocUrl(item.meterId)],
-        ["API docs", DOCS.retailApi],
-        ["Foundry", DOCS.foundry]
-      ];
-      if ((item.productName || "").toLowerCase().includes("openai")) {
-        docs.push(["Azure OpenAI pricing", DOCS.azureOpenAiPricing]);
-        docs.push(["Modelos vendidos por Azure", DOCS.soldByAzure]);
-      } else {
-        docs.push(["Modelos partners/community", DOCS.partners]);
-      }
-      return docs;
-    }
-
-    function unitDivisor(unitOfMeasure) {
-      const normalized = String(unitOfMeasure || "").toLowerCase();
-      if (normalized.includes("1m")) return 1000000;
-      if (normalized.includes("1k")) return 1000;
-      return 1;
-    }
-
-    function calculateCost(item, quantity, runs, factor) {
-      return (Number(quantity) / unitDivisor(item.unitOfMeasure)) * Number(item.retailPrice) * Number(runs) * Number(factor);
-    }
-
-    function calculateRunCost(item, quantity, factor) {
-      return (Number(quantity) / unitDivisor(item.unitOfMeasure)) * Number(item.retailPrice) * Number(factor);
-    }
-
     function searchable(item) {
       return [
+        item.title,
+        item.description,
         item.productName,
         item.skuName,
         item.meterName,
@@ -683,244 +739,6 @@
         item.serviceName,
         item.unitOfMeasure
       ].join(" ").toLowerCase();
-    }
-
-    function optionLabel(item) {
-      return `${item.productName} | ${item.skuName} | ${item.armRegionName} | ${money.format(item.retailPrice)} / ${item.unitOfMeasure}`;
-    }
-
-    function serviceMatches(item, preset) {
-      const text = searchable(item);
-      return preset.include.some(value => text.includes(value));
-    }
-
-    function serviceRank(item, preset) {
-      const text = searchable(item);
-      let rank = 0;
-      preset.prefer.forEach((value, index) => {
-        if (text.includes(value)) rank += 20 - index;
-      });
-      if (item.unitOfMeasure === "1K" || item.unitOfMeasure === "1M") rank += 8;
-      if (String(item.skuName).toLowerCase().includes("commitment")) rank -= 12;
-      if (String(item.productName).toLowerCase().includes("disconnected")) rank -= 20;
-      return rank;
-    }
-
-    function serviceDocs(item, preset) {
-      return [
-        ["Retail meter", meterDocUrl(item.meterId)],
-        ["Retail Prices API", DOCS.retailApi],
-        ...preset.docs
-      ];
-    }
-
-    function renderQuickServices() {
-      els.quickServices.innerHTML = SERVICE_PRESETS.map(preset => {
-        const options = state.servicePrices
-          .filter(item => serviceMatches(item, preset))
-          .sort((a, b) => serviceRank(b, preset) - serviceRank(a, preset) || a.productName.localeCompare(b.productName))
-          .slice(0, 220);
-        return `
-          <article class="service-card" data-service="${preset.id}">
-            <div class="service-card-header">
-              <div>
-                <h3>${escapeHtml(preset.title)}</h3>
-                <p class="muted small">${escapeHtml(preset.description)}</p>
-              </div>
-              <strong class="service-cost">USD 0.00</strong>
-            </div>
-            <label>
-              <span><input class="service-include" type="checkbox"> Incluir este servicio en el total</span>
-            </label>
-            <label>
-              Medidor oficial
-              <select class="service-meter">
-                ${options.map(item => `<option value="${item.id}">${escapeHtml(optionLabel(item))}</option>`).join("")}
-              </select>
-            </label>
-            <div class="service-row">
-              <label>
-                ${escapeHtml(preset.quantityLabel)}
-                <input class="service-quantity" type="number" min="0" step="1" value="${preset.defaultQuantity}">
-              </label>
-              <label>
-                Multiplicador
-                <input class="service-factor" type="number" min="0" step="0.01" value="1">
-              </label>
-            </div>
-            <div class="links"></div>
-          </article>
-        `;
-      }).join("");
-
-      els.quickServices.querySelectorAll("input, select").forEach(input => {
-        input.addEventListener("input", recalcAll);
-        input.addEventListener("change", recalcAll);
-      });
-    }
-
-    function populateFilters() {
-      const products = [...new Set(state.prices.map(item => item.productName).filter(Boolean))].sort();
-      const regions = [...new Set(state.prices.map(item => item.armRegionName).filter(Boolean))].sort();
-      els.productFilter.innerHTML = `<option value="">Todos</option>${products.map(value => `<option>${escapeHtml(value)}</option>`).join("")}`;
-      els.regionFilter.innerHTML = `<option value="">Todas</option>${regions.map(value => `<option>${escapeHtml(value)}</option>`).join("")}`;
-    }
-
-    function applyFilters() {
-      const term = els.searchInput.value.trim().toLowerCase();
-      const product = els.productFilter.value;
-      const region = els.regionFilter.value;
-      state.filtered = state.prices.filter(item => {
-        if (product && item.productName !== product) return false;
-        if (region && item.armRegionName !== region) return false;
-        if (term && !searchable(item).includes(term)) return false;
-        return true;
-      }).slice(0, 500);
-      renderMeters();
-      updateStepOptions();
-    }
-
-    function renderSources() {
-      const generated = state.metadata?.generatedAt ? new Date(state.metadata.generatedAt).toLocaleString("es-AR") : "sin fecha";
-      const sources = [
-        ["Precios", "Azure Retail Prices API", DOCS.retailApi],
-        ["Pricing", "Azure OpenAI pricing", DOCS.azureOpenAiPricing],
-        ["Catálogo", "Foundry Models sold by Azure", DOCS.soldByAzure],
-        ["Partners", "Foundry Models from partners", DOCS.partners]
-      ];
-      els.sourceStrip.innerHTML = sources.map(([label, text, href]) => `
-        <div class="source-pill">
-          <div class="muted small">${label}</div>
-          <a href="${href}" target="_blank" rel="noreferrer">${text}</a>
-        </div>
-      `).join("") + `
-        <div class="source-pill">
-          <div class="muted small">Dataset</div>
-          <strong>${integer.format(state.prices.length)} medidores</strong><br>
-          <span class="small muted">Actualizado: ${generated}</span>
-        </div>
-      `;
-    }
-
-    function renderMeters() {
-      els.meterCount.textContent = `${integer.format(state.filtered.length)} medidores visibles de ${integer.format(state.prices.length)} cargados.`;
-      els.meterTable.innerHTML = state.filtered.slice(0, 40).map(item => `
-        <tr>
-          <td>${escapeHtml(item.productName)}<br><span class="muted small">${escapeHtml(item.serviceName)}</span></td>
-          <td><code>${escapeHtml(item.skuName)}</code><br><span class="small">${escapeHtml(item.meterName)}</span></td>
-          <td>${escapeHtml(item.armRegionName)}<br><span class="muted small">${escapeHtml(item.location)}</span></td>
-          <td>${escapeHtml(item.unitOfMeasure)}</td>
-          <td>${money.format(item.retailPrice)}</td>
-          <td><a href="${meterDocUrl(item.meterId)}" target="_blank" rel="noreferrer">meterId</a></td>
-        </tr>
-      `).join("");
-    }
-
-    function updateStepOptions() {
-      const options = state.filtered.map(item => `<option value="${item.id}">${escapeHtml(optionLabel(item))}</option>`).join("");
-      document.querySelectorAll(".step-meter").forEach(select => {
-        const current = select.value;
-        select.innerHTML = options;
-        if ([...select.options].some(option => option.value === current)) {
-          select.value = current;
-        }
-      });
-      recalcAll();
-    }
-
-    function addStep(defaultName = "") {
-      const fragment = els.template.content.cloneNode(true);
-      const node = fragment.querySelector(".step");
-      node.querySelector(".step-name").value = defaultName;
-      els.steps.appendChild(node);
-      node.querySelectorAll("input, select").forEach(input => input.addEventListener("input", recalcAll));
-      node.querySelector(".step-meter").addEventListener("change", recalcAll);
-      node.querySelector(".remove-step").addEventListener("click", () => {
-        node.remove();
-        recalcAll();
-      });
-      updateStepOptions();
-    }
-
-    function quickRowData(node) {
-      const preset = SERVICE_PRESETS.find(item => item.id === node.dataset.service);
-      const item = state.servicePrices.find(price => price.id === node.querySelector(".service-meter").value);
-      if (!preset || !item) return null;
-      const quantity = Number(node.querySelector(".service-quantity").value || 0);
-      const factor = Number(node.querySelector(".service-factor").value || 0);
-      const included = node.querySelector(".service-include").checked;
-      return {
-        node,
-        preset,
-        item,
-        name: preset.title,
-        quantity,
-        runs: 1,
-        factor,
-        included,
-        monthlyCost: calculateRunCost(item, quantity, factor),
-        runCost: calculateRunCost(item, quantity, factor)
-      };
-    }
-
-    function rowData(node) {
-      const item = state.prices.find(price => price.id === node.querySelector(".step-meter").value);
-      if (!item) return null;
-      const quantity = Number(node.querySelector(".step-quantity").value || 0);
-      const runs = Number(node.querySelector(".step-runs").value || 0);
-      const factor = Number(node.querySelector(".step-factor").value || 0);
-      const name = node.querySelector(".step-name").value || item.meterName;
-      return {
-        node,
-        item,
-        name,
-        quantity,
-        runs,
-        factor,
-        monthlyCost: calculateCost(item, quantity, runs, factor),
-        runCost: calculateRunCost(item, quantity, factor)
-      };
-    }
-
-    function recalcAll() {
-      const serviceRows = [...document.querySelectorAll(".service-card")].map(quickRowData).filter(Boolean);
-      const rows = [...document.querySelectorAll(".step")].map(rowData).filter(Boolean);
-      let monthly = 0;
-      let run = 0;
-      let units = 0;
-
-      serviceRows.forEach(row => {
-        if (row.included) {
-          monthly += row.monthlyCost;
-          units += row.quantity * row.factor;
-        }
-        row.node.querySelector(".service-cost").textContent = money.format(row.monthlyCost);
-        row.node.querySelector(".links").innerHTML = serviceDocs(row.item, row.preset)
-          .map(([text, href]) => `<a class="link-chip" href="${href}" target="_blank" rel="noreferrer">${text}</a>`)
-          .join("");
-      });
-
-      rows.forEach(row => {
-        monthly += row.monthlyCost;
-        run += row.runCost;
-        units += row.quantity * row.factor;
-        row.node.querySelector(".cost").textContent = money.format(row.monthlyCost);
-        row.node.querySelector(".links").innerHTML = docsFor(row.item)
-          .map(([text, href]) => `<a class="link-chip" href="${href}" target="_blank" rel="noreferrer">${text}</a>`)
-          .join("");
-      });
-
-      els.monthlyTotal.textContent = money.format(monthly);
-      els.runTotal.textContent = money.format(run);
-      els.unitTotal.textContent = integer.format(units);
-      els.stepTotal.textContent = integer.format(rows.length + serviceRows.filter(row => row.included).length);
-    }
-
-    function currentRows() {
-      return [
-        ...[...document.querySelectorAll(".service-card")].map(quickRowData).filter(row => row && row.included),
-        ...[...document.querySelectorAll(".step")].map(rowData).filter(Boolean)
-      ];
     }
 
     function escapeHtml(value) {
@@ -933,107 +751,362 @@
       })[char]);
     }
 
-    function csvValue(value) {
-      return `"${String(value ?? "").replace(/"/g, '""')}"`;
+    function meterUrl(meterId) {
+      return `https://prices.azure.com/api/retail/prices?api-version=2023-01-01-preview&$filter=${encodeURIComponent(`meterId eq '${meterId}'`)}`;
     }
 
-    function buildCsv() {
-      const header = [
-        "paso",
-        "tipo",
-        "serviceName",
-        "productName",
-        "skuName",
-        "meterName",
-        "region",
-        "unitOfMeasure",
-        "retailPriceUsd",
-        "quantityPerRun",
-        "runsPerMonth",
-        "multiplier",
-        "costPerRunUsd",
-        "monthlyCostUsd",
-        "retailPriceMeterUrl",
-        "documentation"
+    function unitDivisor(unit) {
+      const normalized = String(unit || "").toLowerCase();
+      if (normalized.includes("1m")) return 1000000;
+      if (normalized.includes("1k")) return 1000;
+      return 1;
+    }
+
+    function cost(item, quantity) {
+      return (Number(quantity) / unitDivisor(item.unitOfMeasure)) * Number(item.retailPrice || 0);
+    }
+
+    function servicePool(service) {
+      const all = [...state.servicePrices, ...state.prices];
+      return all
+        .filter(item => service.include.some(term => searchable(item).includes(term)))
+        .sort((a, b) => rankService(b, service) - rankService(a, service) || a.productName.localeCompare(b.productName))
+        .slice(0, 180);
+    }
+
+    function rankService(item, service) {
+      const text = searchable(item);
+      let score = 0;
+      service.prefer.forEach((term, index) => {
+        if (text.includes(term)) score += 30 - index;
+      });
+      if (item.unitOfMeasure === "1K" || item.unitOfMeasure === "1M") score += 8;
+      if (text.includes("commitment")) score -= 15;
+      if (text.includes("disconnected")) score -= 20;
+      return score;
+    }
+
+    function renderServices() {
+      const term = els.search.value.trim().toLowerCase();
+      const html = SERVICE_SECTIONS.map(section => {
+        const items = section.items.filter(item => !term || searchable(item).includes(term));
+        if (!items.length) return "";
+        return `
+          <section class="section">
+            <h2>${escapeHtml(section.title)} (${items.length})</h2>
+            <div class="cards">
+              ${items.map(item => `
+                <article class="card tile ${state.selectedService?.id === item.id ? "active" : ""}" data-service="${item.id}">
+                  <div class="icon">${escapeHtml(item.icon)}</div>
+                  <div>
+                    <h3>${escapeHtml(item.title)}</h3>
+                    <p>${escapeHtml(item.description)}</p>
+                  </div>
+                </article>
+              `).join("")}
+            </div>
+          </section>
+        `;
+      }).join("");
+      els.content.innerHTML = html || `<div class="card">No encontré tarjetas para esa búsqueda. Encontrar cosas es literalmente mi trabajo, así que esto es incómodo.</div>`;
+      els.content.querySelectorAll("[data-service]").forEach(tile => {
+        tile.addEventListener("click", () => selectService(tile.dataset.service));
+      });
+    }
+
+    function renderModelCatalog() {
+      const families = getModelFamilies();
+      const term = els.search.value.trim().toLowerCase();
+      const filtered = families.filter(family => !term || family.toLowerCase().includes(term));
+      els.content.innerHTML = `
+        <section class="section">
+          <h2>Model catalog (${filtered.length})</h2>
+          <div class="cards">
+            ${filtered.slice(0, 60).map(family => `
+              <article class="card tile" data-model="${escapeHtml(family)}">
+                <div class="icon">M</div>
+                <div>
+                  <h3>${escapeHtml(family)}</h3>
+                  <p>Estimá input y output tokens con medidores oficiales de Foundry Models.</p>
+                </div>
+              </article>
+            `).join("")}
+          </div>
+        </section>
+      `;
+      els.content.querySelectorAll("[data-model]").forEach(tile => {
+        tile.addEventListener("click", () => {
+          setMode("model");
+          els.modelFamily.value = tile.dataset.model;
+          updateModelRegions();
+          calculateModel();
+        });
+      });
+    }
+
+    function renderDocs() {
+      const links = [
+        ["Azure Retail Prices API", DOCS.retail],
+        ["Microsoft Foundry", DOCS.foundry],
+        ["Foundry Models sold by Azure", DOCS.soldByAzure],
+        ["Foundry Models from partners and community", DOCS.partners],
+        ["Azure OpenAI pricing", DOCS.openAiPricing],
+        ["Document Intelligence docs", DOCS.documentIntelligence],
+        ["Azure Vision docs", DOCS.vision],
+        ["Content Safety docs", DOCS.contentSafety]
       ];
-      const rows = currentRows().map(row => [
-        row.name,
-        row.preset ? "servicio-ai" : "modelo-foundry",
-        row.item.serviceName,
-        row.item.productName,
-        row.item.skuName,
-        row.item.meterName,
-        row.item.armRegionName,
-        row.item.unitOfMeasure,
-        row.item.retailPrice,
-        row.quantity,
-        row.runs,
-        row.factor,
-        row.runCost,
-        row.monthlyCost,
-        meterDocUrl(row.item.meterId),
-        (row.preset ? serviceDocs(row.item, row.preset) : docsFor(row.item)).map(([text, href]) => `${text}: ${href}`).join(" | ")
-      ]);
-      return [header, ...rows].map(row => row.map(csvValue).join(",")).join("\n");
+      els.content.innerHTML = `
+        <section class="section">
+          <h2>Documentación oficial</h2>
+          <div class="cards">
+            ${links.map(([label, href]) => `
+              <article class="card">
+                <h3>${escapeHtml(label)}</h3>
+                <p class="muted small">Fuente usada para respaldar estimaciones y categorías.</p>
+                <div class="chips"><a class="chip" href="${href}" target="_blank" rel="noreferrer">Abrir documentación</a></div>
+              </article>
+            `).join("")}
+          </div>
+        </section>
+      `;
     }
 
-    function copySummary() {
-      const rows = currentRows();
-      const total = rows.reduce((sum, row) => sum + row.monthlyCost, 0);
-      const text = [
-        "Estimación mensual Foundry Models",
-        `Total: ${money.format(total)}`,
-        "",
-        ...rows.map(row => [
-          `Paso: ${row.name}`,
-          `Medidor: ${row.item.productName} / ${row.item.skuName} / ${row.item.meterName}`,
-          `Región: ${row.item.armRegionName}`,
-          `Cantidad por ejecución: ${row.quantity}`,
-          `Ejecuciones/mes: ${row.runs}`,
-          `Costo mensual: ${money.format(row.monthlyCost)}`,
-          `Fuente precio: ${meterDocUrl(row.item.meterId)}`,
-          `Docs: ${(row.preset ? serviceDocs(row.item, row.preset) : docsFor(row.item)).map(([label, href]) => `${label} ${href}`).join(" | ")}`
-        ].join("\n"))
-      ].join("\n\n");
+    function selectService(id) {
+      const service = SERVICE_SECTIONS.flatMap(section => section.items).find(item => item.id === id);
+      if (!service) return;
+      state.selectedService = service;
+      setMode("service");
+      els.serviceTitle.textContent = service.title;
+      els.serviceDescription.textContent = service.description;
+      els.serviceQuantity.value = service.defaultQuantity;
+      const pool = servicePool(service);
+      els.serviceMeter.innerHTML = pool.map(item => `<option value="${item.id}">${escapeHtml(labelFor(item))}</option>`).join("");
+      renderServices();
+      calculateService();
+    }
+
+    function labelFor(item) {
+      return `${item.productName} / ${item.skuName} / ${item.armRegionName} / ${money.format(item.retailPrice)} per ${item.unitOfMeasure}`;
+    }
+
+    function selectedServiceMeter() {
+      return [...state.servicePrices, ...state.prices].find(item => item.id === els.serviceMeter.value);
+    }
+
+    function calculateService() {
+      const item = selectedServiceMeter();
+      if (!item) return;
+      const quantity = Number(els.serviceQuantity.value || 0);
+      const total = cost(item, quantity);
+      els.serviceUnit.value = item.unitOfMeasure;
+      els.serviceTotal.textContent = money.format(total);
+      els.serviceBreakdown.innerHTML = `
+        <div class="line"><span>Volumen</span><strong>${integer.format(quantity)}</strong></div>
+        <div class="line"><span>Precio retail</span><strong>${money.format(item.retailPrice)} / ${escapeHtml(item.unitOfMeasure)}</strong></div>
+        <div class="line"><span>Medidor</span><strong>${escapeHtml(item.meterName)}</strong></div>
+      `;
+      const docs = [["Retail meter", meterUrl(item.meterId)], ["Retail Prices API", DOCS.retail], ...(state.selectedService?.docs || [])];
+      els.serviceLinks.innerHTML = docs.map(([label, href]) => `<a class="chip" href="${href}" target="_blank" rel="noreferrer">${escapeHtml(label)}</a>`).join("");
+    }
+
+    function getModelFamilies() {
+      const patterns = [
+        [/gpt[-\s]?5\.6[-\s]?sol/i, "GPT-5.6 Sol"],
+        [/gpt[-\s]?5\.6[-\s]?terra/i, "GPT-5.6 Terra"],
+        [/gpt[-\s]?5\.6[-\s]?luna/i, "GPT-5.6 Luna"],
+        [/gpt[-\s]?5\.5/i, "GPT-5.5"],
+        [/gpt[-\s]?5\.4[-\s]?mini|5\.4 mini/i, "GPT-5.4 mini"],
+        [/gpt[-\s]?5\.4[-\s]?nano|5\.4 nano/i, "GPT-5.4 nano"],
+        [/gpt[-\s]?5\.4[-\s]?pro|5\.4 pro/i, "GPT-5.4 pro"],
+        [/gpt[-\s]?5\.4|5\.4/i, "GPT-5.4"],
+        [/gpt[-\s]?5\.3[-\s]?codex|5\.3 codex/i, "GPT-5.3 Codex"],
+        [/gpt[-\s]?5\.3[-\s]?chat|5\.3 chat/i, "GPT-5.3 Chat"],
+        [/gpt[-\s]?5\.2[-\s]?codex|5\.2 codex/i, "GPT-5.2 Codex"],
+        [/gpt[-\s]?5\.2[-\s]?chat|5\.2 chat/i, "GPT-5.2 Chat"],
+        [/gpt[-\s]?5\.2|5\.2/i, "GPT-5.2"],
+        [/gpt[-\s]?5\.1[-\s]?codex[-\s]?mini|5\.1 codex mini/i, "GPT-5.1 Codex mini"],
+        [/gpt[-\s]?5\.1[-\s]?codex|5\.1 codex/i, "GPT-5.1 Codex"],
+        [/gpt[-\s]?5\.1[-\s]?chat|5\.1 chat/i, "GPT-5.1 Chat"],
+        [/gpt[-\s]?5\.1|5\.1/i, "GPT-5.1"],
+        [/gpt[-\s]?5[-\s]?mini|5 mini/i, "GPT-5 mini"],
+        [/gpt[-\s]?5[-\s]?nano|5 nano/i, "GPT-5 nano"],
+        [/gpt[-\s]?5[-\s]?codex|5 codex/i, "GPT-5 Codex"],
+        [/gpt[-\s]?5\b|\b5\b/i, "GPT-5"],
+        [/gpt[-\s]?4\.1[-\s]?mini|4\.1 mini/i, "GPT-4.1 mini"],
+        [/gpt[-\s]?4\.1[-\s]?nano|4\.1 nano/i, "GPT-4.1 nano"],
+        [/gpt[-\s]?4\.1|4\.1/i, "GPT-4.1"],
+        [/gpt[-\s]?4o[-\s]?mini|4o mini/i, "GPT-4o mini"],
+        [/gpt[-\s]?4o|4o/i, "GPT-4o"],
+        [/\bo4[-\s]?mini\b/i, "o4-mini"],
+        [/\bo3[-\s]?mini\b/i, "o3-mini"],
+        [/\bo3\b/i, "o3"],
+        [/\bo1\b/i, "o1"],
+        [/embedding|embed/i, "Embeddings"],
+        [/claude/i, "Claude"],
+        [/mistral/i, "Mistral"],
+        [/llama/i, "Llama"],
+        [/cohere/i, "Cohere"],
+        [/deepseek/i, "DeepSeek"],
+        [/grok/i, "Grok"],
+        [/phi/i, "Phi"],
+        [/mai/i, "MAI"],
+        [/qwen/i, "Qwen"]
+      ];
+      const names = new Set();
+      state.prices.forEach(item => {
+        const text = searchable(item);
+        const match = patterns.find(([pattern]) => pattern.test(text));
+        if (match) names.add(match[1]);
+      });
+      return [...names].sort();
+    }
+
+    function populateModelControls() {
+      const families = getModelFamilies();
+      els.modelFamily.innerHTML = families.map(family => `<option>${escapeHtml(family)}</option>`).join("");
+      updateModelRegions();
+    }
+
+    function familyItems() {
+      const family = els.modelFamily.value.toLowerCase();
+      const aliases = {
+        "gpt-5": ["gpt 5", "gpt-5", "azure openai gpt5", " 5 "],
+        "gpt-5 mini": ["gpt 5 mini", "gpt-5-mini", "5 mini"],
+        "gpt-5 nano": ["gpt 5 nano", "gpt-5-nano", "5 nano"],
+        "gpt-4.1": ["gpt 4.1", "gpt-4.1", "4.1"],
+        "gpt-4.1 mini": ["gpt 4.1 mini", "gpt-4.1-mini", "4.1 mini"],
+        "gpt-4.1 nano": ["gpt 4.1 nano", "gpt-4.1-nano", "4.1 nano"],
+        "o4-mini": ["o4 mini", "o4-mini"],
+        "o3-mini": ["o3 mini", "o3-mini"],
+        "embeddings": ["embedding", "embed"]
+      };
+      const terms = aliases[family] || [family.replace(/-/g, " "), family];
+      return state.prices.filter(item => terms.some(term => searchable(item).includes(term)));
+    }
+
+    function updateModelRegions() {
+      const regions = [...new Set(familyItems().map(item => item.armRegionName).filter(Boolean))].sort();
+      els.modelRegion.innerHTML = regions.map(region => `<option>${escapeHtml(region)}</option>`).join("");
+    }
+
+    function findModelMeter(kind) {
+      const region = els.modelRegion.value;
+      const terms = kind === "input"
+        ? ["input", "inpt", "inp"]
+        : ["output", "outpt", "opt"];
+      return familyItems()
+        .filter(item => !region || item.armRegionName === region)
+        .filter(item => terms.some(term => searchable(item).includes(term)))
+        .sort((a, b) => scoreModelMeter(b, kind) - scoreModelMeter(a, kind))[0];
+    }
+
+    function scoreModelMeter(item, kind) {
+      const text = searchable(item);
+      let score = 0;
+      if (kind === "input" && (text.includes("input") || text.includes("inpt") || text.includes(" inp "))) score += 20;
+      if (kind === "output" && (text.includes("output") || text.includes("outpt") || text.includes(" opt "))) score += 20;
+      if (text.includes("cached") || text.includes("cchd")) score -= 12;
+      if (text.includes("batch")) score -= 8;
+      if (item.unitOfMeasure === "1M") score += 5;
+      return score;
+    }
+
+    function calculateModel() {
+      const inputMeter = findModelMeter("input");
+      const outputMeter = findModelMeter("output");
+      const inputTokens = Number(els.inputTokens.value || 0);
+      const outputTokens = Number(els.outputTokens.value || 0);
+      const inputCost = inputMeter ? cost(inputMeter, inputTokens) : 0;
+      const outputCost = outputMeter ? cost(outputMeter, outputTokens) : 0;
+      els.modelTotal.textContent = money.format(inputCost + outputCost);
+      els.modelBreakdown.innerHTML = `
+        <div class="line"><span>Input tokens</span><strong>${money.format(inputCost)}</strong></div>
+        <div class="line"><span>Output tokens</span><strong>${money.format(outputCost)}</strong></div>
+        <div class="line"><span>Input meter</span><strong>${escapeHtml(inputMeter?.meterName || "No encontrado")}</strong></div>
+        <div class="line"><span>Output meter</span><strong>${escapeHtml(outputMeter?.meterName || "No encontrado")}</strong></div>
+      `;
+      const links = [
+        ["Foundry Models", DOCS.soldByAzure],
+        ["Azure OpenAI pricing", DOCS.openAiPricing],
+        ["Retail Prices API", DOCS.retail]
+      ];
+      if (inputMeter) links.unshift(["Input meter", meterUrl(inputMeter.meterId)]);
+      if (outputMeter) links.unshift(["Output meter", meterUrl(outputMeter.meterId)]);
+      els.modelLinks.innerHTML = links.map(([label, href]) => `<a class="chip" href="${href}" target="_blank" rel="noreferrer">${escapeHtml(label)}</a>`).join("");
+    }
+
+    function setMode(mode) {
+      state.mode = mode;
+      els.servicePanel.classList.toggle("hidden", mode !== "service");
+      els.modelPanel.classList.toggle("hidden", mode !== "model");
+      document.querySelectorAll(".tabs button").forEach(button => button.classList.toggle("active", button.dataset.mode === mode));
+    }
+
+    function setView(view) {
+      document.querySelectorAll(".nav button").forEach(button => button.classList.toggle("active", button.dataset.view === view));
+      if (view === "services") renderServices();
+      if (view === "models") {
+        setMode("model");
+        renderModelCatalog();
+      }
+      if (view === "docs") renderDocs();
+    }
+
+    function copyEstimate() {
+      const serviceItem = selectedServiceMeter();
+      const inputMeter = findModelMeter("input");
+      const outputMeter = findModelMeter("output");
+      const text = state.mode === "service" && serviceItem
+        ? [
+            `Servicio: ${state.selectedService.title}`,
+            `Volumen mensual: ${els.serviceQuantity.value} ${serviceItem.unitOfMeasure}`,
+            `Costo estimado: ${els.serviceTotal.textContent}`,
+            `Medidor: ${serviceItem.productName} / ${serviceItem.skuName} / ${serviceItem.meterName}`,
+            `Fuente precio: ${meterUrl(serviceItem.meterId)}`
+          ].join("\n")
+        : [
+            `Modelo: ${els.modelFamily.value}`,
+            `Input tokens/mes: ${els.inputTokens.value}`,
+            `Output tokens/mes: ${els.outputTokens.value}`,
+            `Costo estimado: ${els.modelTotal.textContent}`,
+            `Input meter: ${inputMeter ? meterUrl(inputMeter.meterId) : "No encontrado"}`,
+            `Output meter: ${outputMeter ? meterUrl(outputMeter.meterId) : "No encontrado"}`
+          ].join("\n");
       navigator.clipboard.writeText(text);
     }
 
-    function downloadCsv() {
-      const blob = new Blob([buildCsv()], { type: "text/csv;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "foundry-token-estimate.csv";
-      link.click();
-      URL.revokeObjectURL(url);
-    }
-
     async function init() {
-      try {
-        const response = await fetch(DATA_URL);
-        if (!response.ok) throw new Error(`No se pudo cargar ${DATA_URL}`);
-        const data = await response.json();
-        state.metadata = data.metadata;
-        state.prices = data.items.map((item, index) => ({ ...item, id: `${item.meterId}-${index}` }));
-        state.servicePrices = (data.serviceItems || []).map((item, index) => ({ ...item, id: `${item.meterId}-service-${index}` }));
-        state.filtered = state.prices.slice(0, 500);
-        populateFilters();
-        renderSources();
-        renderQuickServices();
-        applyFilters();
-      } catch (error) {
-        els.steps.innerHTML = `<div class="notice danger">Error cargando precios oficiales: ${escapeHtml(error.message)}. Ejecute <code>scripts/refresh-prices.ps1</code> para regenerar <code>data/prices.json</code>.</div>`;
+      const response = await fetch("data/prices.json");
+      if (!response.ok) throw new Error("No se pudo cargar data/prices.json");
+      const data = await response.json();
+      state.prices = data.items.map((item, index) => ({ ...item, id: `model-${index}-${item.meterId}` }));
+      state.servicePrices = (data.serviceItems || []).map((item, index) => ({ ...item, id: `service-${index}-${item.meterId}` }));
+      els.datasetStatus.textContent = `${integer.format(state.servicePrices.length)} service meters · ${integer.format(state.prices.length)} model meters`;
+      populateModelControls();
+      if ([...els.modelFamily.options].some(option => option.value === "GPT-5 mini")) {
+        els.modelFamily.value = "GPT-5 mini";
+        updateModelRegions();
       }
+      selectService("document-layout");
+      renderServices();
+      calculateModel();
     }
 
-    els.searchInput.addEventListener("input", applyFilters);
-    els.productFilter.addEventListener("change", applyFilters);
-    els.regionFilter.addEventListener("change", applyFilters);
-    els.addStep.addEventListener("click", () => addStep(`Paso ${document.querySelectorAll(".step").length + 1}`));
-    els.copySummary.addEventListener("click", copySummary);
-    els.downloadCsv.addEventListener("click", downloadCsv);
+    document.querySelectorAll(".tabs button").forEach(button => button.addEventListener("click", () => setMode(button.dataset.mode)));
+    document.querySelectorAll(".nav button").forEach(button => button.addEventListener("click", () => setView(button.dataset.view)));
+    els.search.addEventListener("input", () => document.querySelector(".nav button.active").dataset.view === "models" ? renderModelCatalog() : renderServices());
+    els.serviceMeter.addEventListener("change", calculateService);
+    els.serviceQuantity.addEventListener("input", calculateService);
+    els.modelFamily.addEventListener("change", () => { updateModelRegions(); calculateModel(); });
+    els.modelRegion.addEventListener("change", calculateModel);
+    els.inputTokens.addEventListener("input", calculateModel);
+    els.outputTokens.addEventListener("input", calculateModel);
+    els.copyEstimate.addEventListener("click", copyEstimate);
 
-    init();
+    init().catch(error => {
+      els.content.innerHTML = `<div class="notice">Error cargando precios: ${escapeHtml(error.message)}</div>`;
+      els.datasetStatus.textContent = "Pricing data error";
+    });
   </script>
 </body>
 </html>

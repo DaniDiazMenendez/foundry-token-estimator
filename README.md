@@ -2,7 +2,9 @@
 
 Aplicación estática para estimar costos por proceso usando medidores oficiales de **Foundry Models** y servicios de IA publicados en Azure Retail Prices API.
 
-La experiencia principal incluye estimadores rápidos para Document Intelligence, Azure Vision, Content Safety, Translator, Speech, Language y Azure AI Search. La sección de modelos Foundry queda como modo avanzado para cálculos de entrada, salida, cached input, embeddings y otros medidores tokenizados.
+La experiencia principal replica la simpleza de **Discover** en Microsoft Foundry: tarjetas por escenario/servicio, panel lateral de estimación y selector de medidor oficial. Incluye estimaciones a nivel servicio para document layout, invoice analyzer, speech to text, text to speech, voice live, translation, language detection, call center, custom speech/voice/avatar, herramientas y templates.
+
+La pestaña **Models** permite estimar a nivel modelo/familia con input tokens y output tokens mensuales usando medidores oficiales de Foundry Models.
 
 ## Fuentes oficiales
 
