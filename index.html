@@ -483,6 +483,10 @@
                 <input id="safetyMargin" type="number" min="0" step="1" value="20">
               </label>
             </div>
+            <label>
+              Tokens por palabra (supuesto editable)
+              <input id="tokensPerWord" type="number" min="0.1" step="0.01" value="1.33">
+            </label>
             <button class="button secondary" id="applyTokenEstimate">Usar estos tokens para calcular USD</button>
           </div>
           <div class="answer" id="tokenBreakdown"></div>
@@ -961,6 +965,7 @@
       wordsPerPage: document.getElementById("wordsPerPage"),
       iterationsPerCase: document.getElementById("iterationsPerCase"),
       safetyMargin: document.getElementById("safetyMargin"),
+      tokensPerWord: document.getElementById("tokensPerWord"),
       applyTokenEstimate: document.getElementById("applyTokenEstimate"),
       tokenBreakdown: document.getElementById("tokenBreakdown"),
       inputTokens: document.getElementById("inputTokens"),
@@ -1032,8 +1037,6 @@
         note: "Agente: multiplica por iteraciones porque cada paso vuelve a enviar contexto, herramientas y respuesta parcial."
       }
     };
-
-    const TOKENS_PER_WORD = 1.33;
 
     function searchable(item) {
       return [
@@ -1530,9 +1533,10 @@
       const wordsPerPage = Number(els.wordsPerPage.value || 0);
       const iterations = Number(els.iterationsPerCase.value || 1);
       const margin = Number(els.safetyMargin.value || 0) / 100;
+      const tokensPerWord = Number(els.tokensPerWord.value || 1.33);
       const contextWords = contextPages * wordsPerPage;
-      const inputTokensPerCase = Math.ceil((inputWords + contextWords) * TOKENS_PER_WORD * iterations);
-      const outputTokensPerCase = Math.ceil(outputWords * TOKENS_PER_WORD * iterations);
+      const inputTokensPerCase = Math.ceil((inputWords + contextWords) * tokensPerWord * iterations);
+      const outputTokensPerCase = Math.ceil(outputWords * tokensPerWord * iterations);
       const inputTokens = Math.ceil(inputTokensPerCase * monthlyUnits * (1 + margin));
       const outputTokens = Math.ceil(outputTokensPerCase * monthlyUnits * (1 + margin));
       return {
@@ -1544,6 +1548,7 @@
         wordsPerPage,
         iterations,
         margin,
+        tokensPerWord,
         inputTokensPerCase,
         outputTokensPerCase,
         inputTokens,
@@ -1560,12 +1565,13 @@
           <strong>${integer.format(estimate.inputTokens + estimate.outputTokens)} tokens/mes</strong>
           <small>${integer.format(estimate.inputTokens)} input + ${integer.format(estimate.outputTokens)} output.</small>
           <small>${escapeHtml(preset.note)}</small>
+          <small>Los valores iniciales del preset son supuestos de preventa editables, no precios ni límites oficiales de Microsoft.</small>
           <div class="chips"><a class="chip" href="${DOCS.chatCompletions}" target="_blank" rel="noreferrer">Chat completions: usage tokens</a><a class="chip" href="${DOCS.embeddings}" target="_blank" rel="noreferrer">Embeddings docs</a></div>
         </div>
-        <div class="line"><span>Input por caso</span><strong>${integer.format(estimate.inputTokensPerCase)} tokens</strong><small>(${integer.format(estimate.inputWords)} palabras de entrada + ${integer.format(estimate.contextWords)} palabras de contexto) × ${estimate.iterations} iteración(es).</small></div>
-        <div class="line"><span>Output por caso</span><strong>${integer.format(estimate.outputTokensPerCase)} tokens</strong><small>${integer.format(estimate.outputWords)} palabras esperadas × ${estimate.iterations} iteración(es).</small></div>
+        <div class="line"><span>Input por caso</span><strong>${integer.format(estimate.inputTokensPerCase)} tokens</strong><small>(${integer.format(estimate.inputWords)} palabras de entrada + ${integer.format(estimate.contextWords)} palabras de contexto) × ${decimalMoney.format(estimate.tokensPerWord)} tokens/palabra × ${estimate.iterations} iteración(es).</small></div>
+        <div class="line"><span>Output por caso</span><strong>${integer.format(estimate.outputTokensPerCase)} tokens</strong><small>${integer.format(estimate.outputWords)} palabras esperadas × ${decimalMoney.format(estimate.tokensPerWord)} tokens/palabra × ${estimate.iterations} iteración(es).</small></div>
         <div class="line"><span>Margen aplicado</span><strong>${integer.format(estimate.margin * 100)}%</strong><small>Sirve para cubrir variación de prompts, formato JSON, tool calls y respuestas más largas.</small></div>
-        <div class="notice small">Regla base editable: 1 palabra ≈ 1,33 tokens. Para producción, calibrar con mediciones reales de la API usando <code>usage.prompt_tokens</code>, <code>usage.completion_tokens</code> y <code>usage.total_tokens</code>.</div>
+        <div class="notice small">La conversión palabra→token es una heurística editable para preventa. No existe una conversión universal oficial: depende del modelo, tokenizer, idioma, formato y contenido. Para producción, calibrar con mediciones reales de la API usando <code>usage.prompt_tokens</code>, <code>usage.completion_tokens</code> y <code>usage.total_tokens</code>, campos mostrados en la documentación oficial de Chat Completions.</div>
       `;
     }
 
@@ -1586,6 +1592,7 @@
       els.wordsPerPage.value = preset.wordsPerPage;
       els.iterationsPerCase.value = preset.iterations;
       els.safetyMargin.value = preset.margin;
+      els.tokensPerWord.value = "1.33";
       renderTokenEstimate();
       applyTokenEstimateToModel();
     }
@@ -1660,7 +1667,7 @@
     els.inputTokens.addEventListener("input", calculateModel);
     els.outputTokens.addEventListener("input", calculateModel);
     els.tokenPreset.addEventListener("change", applyTokenPreset);
-    [els.monthlyUnits, els.inputWords, els.outputWords, els.contextPages, els.wordsPerPage, els.iterationsPerCase, els.safetyMargin].forEach(input => {
+    [els.monthlyUnits, els.inputWords, els.outputWords, els.contextPages, els.wordsPerPage, els.iterationsPerCase, els.safetyMargin, els.tokensPerWord].forEach(input => {
       input.addEventListener("input", renderTokenEstimate);
     });
     els.applyTokenEstimate.addEventListener("click", applyTokenEstimateToModel);
