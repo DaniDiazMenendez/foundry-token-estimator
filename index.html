@@ -458,7 +458,12 @@
       speechPricing: "https://azure.microsoft.com/en-us/pricing/details/cognitive-services/speech-services/",
       translatorPricing: "https://azure.microsoft.com/en-us/pricing/details/cognitive-services/translator/",
       languagePricing: "https://azure.microsoft.com/en-us/pricing/details/cognitive-services/language-service/",
-      searchPricing: "https://azure.microsoft.com/en-us/pricing/details/search/"
+      searchPricing: "https://azure.microsoft.com/en-us/pricing/details/search/",
+      speechTranslation: "https://learn.microsoft.com/en-us/azure/ai-services/speech-service/speech-translation",
+      textToSpeechAvatar: "https://learn.microsoft.com/en-us/azure/ai-services/speech-service/text-to-speech-avatar/what-is-text-to-speech-avatar",
+      documentTranslation: "https://learn.microsoft.com/en-us/azure/ai-services/translator/document-translation/overview",
+      pii: "https://learn.microsoft.com/en-us/azure/ai-services/language-service/personally-identifiable-information/overview",
+      health: "https://learn.microsoft.com/en-us/azure/ai-services/language-service/text-analytics-for-health/overview"
     };
 
     const SERVICE_SECTIONS = [
@@ -552,6 +557,116 @@
             include: ["language", "speech", "content safety"],
             prefer: ["text records", "speech to text", "standard"],
             docs: [["Language pricing", DOCS.languagePricing], ["Speech pricing", DOCS.speechPricing]]
+          },
+          {
+            id: "speech-translation",
+            icon: "≋",
+            title: "Speech translation",
+            description: "Translate spoken audio across languages in real time.",
+            quantityLabel: "Horas de audio o caracteres traducidos por mes",
+            defaultQuantity: 100,
+            include: ["speech", "translator"],
+            prefer: ["speech translation", "speech to text", "standard characters", "characters"],
+            docs: [["Speech translation docs", DOCS.speechTranslation], ["Speech pricing", DOCS.speechPricing], ["Translator pricing", DOCS.translatorPricing]]
+          },
+          {
+            id: "tax-us-analyzer",
+            icon: "□",
+            title: "Tax (US) analyzer",
+            description: "Extract structured information from common US tax forms.",
+            quantityLabel: "Páginas de formularios fiscales por mes",
+            defaultQuantity: 5000,
+            include: ["document intelligence"],
+            prefer: ["tax", "pre-built", "standard", "read"],
+            docs: [["Document Intelligence docs", DOCS.documentIntelligence], ["Pricing", DOCS.documentIntelligencePricing]]
+          },
+          {
+            id: "text-to-speech-avatar",
+            icon: "≋",
+            title: "Text to speech avatar",
+            description: "Bring your brand to life using avatars with natural-sounding voices.",
+            quantityLabel: "Caracteres, minutos o unidades de avatar por mes",
+            defaultQuantity: 100000,
+            include: ["speech"],
+            prefer: ["avatar", "text to speech", "characters"],
+            docs: [["Text to speech avatar docs", DOCS.textToSpeechAvatar], ["Speech pricing", DOCS.speechPricing]]
+          },
+          {
+            id: "document-translation",
+            icon: "文",
+            title: "Document translation",
+            description: "Translate documents at scale while preserving layout.",
+            quantityLabel: "Caracteres, documentos o imágenes traducidas por mes",
+            defaultQuantity: 1000000,
+            include: ["translator"],
+            prefer: ["document characters", "document", "standard characters", "characters"],
+            docs: [["Document translation docs", DOCS.documentTranslation], ["Translator pricing", DOCS.translatorPricing]]
+          },
+          {
+            id: "text-pii-redaction",
+            icon: "A",
+            title: "Text PII redaction",
+            description: "Detect and redact personally identifiable information in text.",
+            quantityLabel: "Registros de texto por mes",
+            defaultQuantity: 100000,
+            include: ["azure language"],
+            prefer: ["pii", "text records", "standard"],
+            docs: [["PII docs", DOCS.pii], ["Language pricing", DOCS.languagePricing]]
+          },
+          {
+            id: "document-pii-redaction",
+            icon: "A",
+            title: "Document PII redaction",
+            description: "Identify and redact sensitive personal information across documents.",
+            quantityLabel: "Páginas o documentos por mes",
+            defaultQuantity: 10000,
+            include: ["azure language"],
+            prefer: ["doc-pii", "document", "pages", "pii"],
+            docs: [["PII docs", DOCS.pii], ["Language pricing", DOCS.languagePricing]]
+          },
+          {
+            id: "conversational-pii-redaction",
+            icon: "A",
+            title: "Conversational PII redaction",
+            description: "Detect and remove personal information from transcripts and chats.",
+            quantityLabel: "Conversaciones, turnos o registros por mes",
+            defaultQuantity: 100000,
+            include: ["azure language"],
+            prefer: ["conversation", "pii", "text records", "standard"],
+            docs: [["PII docs", DOCS.pii], ["Language pricing", DOCS.languagePricing]]
+          },
+          {
+            id: "ocr-read-analyzer",
+            icon: "□",
+            title: "OCR Read analyzer",
+            description: "Extract printed and handwritten text from images and documents.",
+            quantityLabel: "Páginas o imágenes OCR por mes",
+            defaultQuantity: 10000,
+            include: ["document intelligence", "vision"],
+            prefer: ["read", "ocr", "standard", "transactions"],
+            docs: [["Document Intelligence docs", DOCS.documentIntelligence], ["Vision docs", DOCS.vision], ["Document Intelligence pricing", DOCS.documentIntelligencePricing]]
+          },
+          {
+            id: "text-analytics-health",
+            icon: "A",
+            title: "Text analytics for health",
+            description: "Extract medical concepts, relationships and codes from text.",
+            quantityLabel: "Registros clínicos o texto por mes",
+            defaultQuantity: 100000,
+            include: ["azure language"],
+            prefer: ["ta4h", "health", "text analytics", "text records"],
+            docs: [["Text analytics for health docs", DOCS.health], ["Language pricing", DOCS.languagePricing]]
+          },
+          {
+            id: "document-fields-analyzer",
+            icon: "□",
+            title: "Document fields analyzer",
+            description: "Extract structured field values from any document type.",
+            quantityLabel: "Páginas de documentos por mes",
+            defaultQuantity: 10000,
+            include: ["document intelligence"],
+            prefer: ["custom", "pre-built", "layout", "standard"],
+            docs: [["Document Intelligence docs", DOCS.documentIntelligence], ["Pricing", DOCS.documentIntelligencePricing]]
           }
         ]
       },
